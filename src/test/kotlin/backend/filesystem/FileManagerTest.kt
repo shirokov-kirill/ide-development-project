@@ -1,10 +1,12 @@
 package backend.filesystem
 
 import backend.filesystem.structure.UpdatableFolderStructureTreeNode
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.net.URLDecoder
+import kotlin.test.assertIsNot
 
 
 class FileManagerTest {
@@ -37,5 +39,21 @@ class FileManagerTest {
         assert(fileTree.value == UpdatableFolderStructureTreeNode.Empty)
         fileManager.load("$localPath/testStructure")
         assert(fileTree.value != UpdatableFolderStructureTreeNode.Empty)
+    }
+
+    @Test
+    fun configFilesCreated() {
+        assert(!File("$localPath/testStructure/${IDELangFileManager.projConfigFolderName}").exists())
+        assert(!File("$localPath/testStructure/${IDELangFileManager.projConfigFolderName}/${IDELangFileManager.projConfigFileName}").exists())
+        fileManager.load("$localPath/testStructure")
+        assert(File("$localPath/testStructure/${IDELangFileManager.projConfigFolderName}").exists())
+        assert(File("$localPath/testStructure/${IDELangFileManager.projConfigFolderName}/${IDELangFileManager.projConfigFileName}").exists())
+    }
+
+    @AfterEach
+    fun afterEach() {
+        // delete tmp files
+        File("$localPath/testStructure/${IDELangFileManager.projConfigFolderName}/${IDELangFileManager.projConfigFileName}").delete()
+        File("$localPath/testStructure/${IDELangFileManager.projConfigFolderName}").delete()
     }
 }

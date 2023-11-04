@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import java.io.File
 
 class IDELangFileManager: FileManager {
     private var projectPath = ""
@@ -31,8 +32,11 @@ class IDELangFileManager: FileManager {
     }
 
     override fun load(filePath: String): Boolean {
-        projectPath = filePath
         _folderTree.update { folderStructureTree.load(filePath) }
+        if(folderStructureTree.root.virtualDescriptor.type != VirtualDescriptorFileType.Empty) {
+            // this is a valid path
+            projectPath = filePath
+        }
         if(folderStructureTree.root.virtualDescriptor.type == VirtualDescriptorFileType.RootFolder) {
             initializeProjectIfNotYet()
         }
@@ -41,10 +45,29 @@ class IDELangFileManager: FileManager {
     }
 
     private fun initializeProjectIfNotYet() {
-        TODO("Not yet implemented")
+        // create config folder
+        val configFolderPath = listOf(projectPath, projConfigFolderName).joinToString("/")
+        val configFolder = File(configFolderPath)
+        try {
+            configFolder.mkdir()
+            initializeConfigFile(configFolderPath)
+        } catch (e: SecurityException) {
+            println("Can't initialize project due to security reasons.")
+        }
+    }
+
+    private fun initializeConfigFile(path: String) {
+        val configFile = File(listOf(path, projConfigFileName).joinToString("/"))
+        configFile.createNewFile()
+        updateFileAsConfig(configFile)
+    }
+
+    private fun updateFileAsConfig(file: File) {
+        file.writeText("proj_dir: $projectPath")
     }
 
     companion object {
-        private val projConfigFolderName = ".idl"
+        const val projConfigFolderName = ".idl"
+        const val projConfigFileName = "config.txt"
     }
 }
