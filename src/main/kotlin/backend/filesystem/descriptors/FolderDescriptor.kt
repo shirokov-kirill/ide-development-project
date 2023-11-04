@@ -4,8 +4,7 @@ import backend.filesystem.VirtualDescriptorFileType
 import backend.filesystem.VirtualFile
 
 class FolderDescriptor(
-    override val name: String,
-    override val relativePath: String,
+    override var name: String,
     override val type: VirtualDescriptorFileType
 ) : VirtualDescriptor {
 

@@ -52,7 +52,7 @@ class UpdatableFolderStructureTree : UpdatableFolderStructure {
                     }
                 }
             }
-            val node = UpdatableFolderStructureTreeNode(0, FolderDescriptor(file.name, file.path, VirtualDescriptorFileType.RootFolder), children)
+            val node = UpdatableFolderStructureTreeNode(0, FolderDescriptor(file.name, VirtualDescriptorFileType.RootFolder), children)
             node.hash = node.hashCode()
             return node
         } else if (file.exists() && file.isDirectory) {
@@ -66,12 +66,12 @@ class UpdatableFolderStructureTree : UpdatableFolderStructure {
                     }
                 }
             }
-            val node = UpdatableFolderStructureTreeNode(0, FolderDescriptor(file.name, file.path, VirtualDescriptorFileType.Folder), children)
+            val node = UpdatableFolderStructureTreeNode(0, FolderDescriptor(file.name, VirtualDescriptorFileType.Folder), children)
             node.hash = node.hashCode()
             return node
         } else if (file.exists() && file.isFile) {
             // load file
-            val node = UpdatableFolderStructureTreeNode(0, FolderDescriptor(file.name, file.path, VirtualDescriptorFileType.File), listOf())
+            val node = UpdatableFolderStructureTreeNode(0, FolderDescriptor(file.name, VirtualDescriptorFileType.File), listOf())
             node.hash = node.hashCode()
             return node
         } else {
