@@ -1,4 +1,4 @@
-package backend.filesystem
+package backend.filesystem.descriptors
 
 enum class VirtualDescriptorFileType {
     File,

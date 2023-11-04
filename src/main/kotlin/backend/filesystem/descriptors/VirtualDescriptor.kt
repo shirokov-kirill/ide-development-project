@@ -1,6 +1,5 @@
 package backend.filesystem.descriptors
 
-import backend.filesystem.VirtualDescriptorFileType
 import backend.filesystem.VirtualFile
 
 interface VirtualDescriptor {

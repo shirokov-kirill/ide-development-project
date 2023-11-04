@@ -1,6 +1,7 @@
 package backend.filesystem
 
 import backend.filesystem.descriptors.VirtualDescriptor
+import backend.filesystem.descriptors.VirtualDescriptorFileType
 import backend.filesystem.structure.FolderStructureNode
 import backend.filesystem.structure.UpdatableFolderStructureTree
 import backend.filesystem.structure.UpdatableFolderStructureTreeNode
@@ -10,7 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 class IDELangFileManager: FileManager {
-
+    private var projectPath = ""
     private var folderStructureTree = UpdatableFolderStructureTree()
     private val _folderTree = MutableStateFlow<FolderStructureNode>(UpdatableFolderStructureTreeNode.Empty)
     override val folderTree: StateFlow<FolderStructureNode> = _folderTree.asStateFlow()
@@ -30,8 +31,20 @@ class IDELangFileManager: FileManager {
     }
 
     override fun load(filePath: String): Boolean {
+        projectPath = filePath
         _folderTree.update { folderStructureTree.load(filePath) }
+        if(folderStructureTree.root.virtualDescriptor.type == VirtualDescriptorFileType.RootFolder) {
+            initializeProjectIfNotYet()
+        }
+
         return true
     }
 
+    private fun initializeProjectIfNotYet() {
+        TODO("Not yet implemented")
+    }
+
+    companion object {
+        private val projConfigFolderName = ".idl"
+    }
 }

@@ -1,13 +1,12 @@
 package backend.filesystem.structure
 
-import backend.filesystem.VirtualDescriptorFileType
+import backend.filesystem.descriptors.VirtualDescriptorFileType
 import backend.filesystem.descriptors.FolderDescriptor
 import backend.filesystem.descriptors.VirtualDescriptor
 import java.io.File
 
 class UpdatableFolderStructureTree : UpdatableFolderStructure {
-    private var root: UpdatableFolderStructureTreeNode = UpdatableFolderStructureTreeNode.Empty
-    private var filePath: String = ""
+    var root: UpdatableFolderStructureTreeNode = UpdatableFolderStructureTreeNode.Empty
 
     override fun add(item: VirtualDescriptor): Boolean {
         TODO("Not yet implemented")
@@ -18,14 +17,13 @@ class UpdatableFolderStructureTree : UpdatableFolderStructure {
     }
 
     override fun load(filePath: String): FolderStructureNode {
-        this.filePath = filePath
         load(File(filePath), 0)?. let {
             root = it
         }
         return root
     }
 
-    override fun loadSecondaryAndUpdate(): FolderStructureNode {
+    override fun loadSecondaryAndUpdate(filePath: String): FolderStructureNode {
         var node: UpdatableFolderStructureTreeNode = UpdatableFolderStructureTreeNode.Empty
         load(File(filePath), 0)?. let {
             node = it
