@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface FileManager {
     val folderTree: StateFlow<FolderStructureNode>
+    val virtualFolderTree: StateFlow<FolderStructureNode>
 
     fun save(descriptor: VirtualDescriptor): Boolean
 

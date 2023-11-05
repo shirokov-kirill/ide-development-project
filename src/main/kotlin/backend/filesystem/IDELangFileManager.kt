@@ -16,9 +16,12 @@ class IDELangFileManager: FileManager {
     private var folderStructureTree = UpdatableFolderStructureTree()
     private val _folderTree = MutableStateFlow<FolderStructureNode>(UpdatableFolderStructureTreeNode.Empty)
     override val folderTree: StateFlow<FolderStructureNode> = _folderTree.asStateFlow()
-    // private val _virtualFolderTree
-    // val virtualFolderTree
+    // private val _virtualFolderTree = MutableStateFlow<FolderStructureNode>(TODO()
+    override val virtualFolderTree: StateFlow<FolderStructureNode> = _folderTree.asStateFlow() //TODO()
 
+    /*
+     * Call on explicit Save action from user
+     */
     override fun save(descriptor: VirtualDescriptor): Boolean {
         TODO("Not yet implemented")
     }

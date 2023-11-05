@@ -5,8 +5,6 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.File
-import java.net.URLDecoder
-import kotlin.test.assertIsNot
 
 
 class FileManagerTest {
@@ -48,6 +46,35 @@ class FileManagerTest {
         fileManager.load("$localPath/testStructure")
         assert(File("$localPath/testStructure/${IDELangFileManager.projConfigFolderName}").exists())
         assert(File("$localPath/testStructure/${IDELangFileManager.projConfigFolderName}/${IDELangFileManager.projConfigFileName}").exists())
+    }
+
+    @Test
+    fun configFilesWriteNotFailOnExistingFiles1() {
+        File("$localPath/testStructure/${IDELangFileManager.projConfigFolderName}").mkdir()
+        File("$localPath/testStructure/${IDELangFileManager.projConfigFolderName}/${IDELangFileManager.projConfigFileName}").createNewFile()
+        assert(File("$localPath/testStructure/${IDELangFileManager.projConfigFolderName}").exists())
+        assert(File("$localPath/testStructure/${IDELangFileManager.projConfigFolderName}/${IDELangFileManager.projConfigFileName}").exists())
+        fileManager.load("$localPath/testStructure")
+        assert(File("$localPath/testStructure/${IDELangFileManager.projConfigFolderName}").exists())
+        assert(File("$localPath/testStructure/${IDELangFileManager.projConfigFolderName}/${IDELangFileManager.projConfigFileName}").exists())
+    }
+
+    @Test
+    fun configFilesWriteNotFailOnExistingFiles2() {
+        File("$localPath/testStructure/${IDELangFileManager.projConfigFolderName}").mkdir()
+        val configFile = File("$localPath/testStructure/${IDELangFileManager.projConfigFolderName}/${IDELangFileManager.projConfigFileName}")
+        configFile.createNewFile()
+        configFile.writeText("Hello world!")
+        assert(File("$localPath/testStructure/${IDELangFileManager.projConfigFolderName}").exists())
+        assert(configFile.exists())
+        assert(configFile.readLines().contains("Hello world!"))
+
+        fileManager.load("$localPath/testStructure")
+
+        assert(File("$localPath/testStructure/${IDELangFileManager.projConfigFolderName}").exists())
+        assert(configFile.exists())
+        assert(!configFile.readLines().contains("Hello world!"))
+        assert(configFile.readLines().contains("proj_dir: $localPath/testStructure"))
     }
 
     @AfterEach
