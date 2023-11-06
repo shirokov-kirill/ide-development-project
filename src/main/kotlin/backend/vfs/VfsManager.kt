@@ -1,40 +1,27 @@
-package backend.filesystem
+package backend.vfs
 
-import backend.filesystem.descriptors.VirtualDescriptor
-import backend.filesystem.descriptors.VirtualDescriptorFileType
-import backend.filesystem.structure.FolderStructureNode
-import backend.filesystem.structure.UpdatableFolderStructureTree
-import backend.filesystem.structure.UpdatableFolderStructureTreeNode
+import backend.filesystem.FilesystemChangeEvent
+import backend.vfs.descriptors.VirtualDescriptorFileType
+import backend.vfs.structure.FolderStructureNode
+import backend.vfs.structure.UpdatableFolderStructureTree
+import backend.vfs.structure.UpdatableFolderStructureTreeNode
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.io.File
 
-class IDELangFileManager: FileManager {
-    private var projectPath = ""
+class VfsManager(private val filesystemEvents: ReceiveChannel<FilesystemChangeEvent>) {
+    private var projectPath: String = ""
     private var folderStructureTree = UpdatableFolderStructureTree()
     private val _folderTree = MutableStateFlow<FolderStructureNode>(UpdatableFolderStructureTreeNode.Empty)
-    override val folderTree: StateFlow<FolderStructureNode> = _folderTree.asStateFlow()
     // private val _virtualFolderTree = MutableStateFlow<FolderStructureNode>(TODO()
-    override val virtualFolderTree: StateFlow<FolderStructureNode> = _folderTree.asStateFlow() //TODO()
 
-    /*
-     * Call on explicit Save action from user
-     */
-    override fun save(descriptor: VirtualDescriptor): Boolean {
-        TODO("Not yet implemented")
-    }
+    val folderTree: StateFlow<FolderStructureNode> = _folderTree.asStateFlow()
+    val virtualFolderTree: StateFlow<FolderStructureNode> = _folderTree.asStateFlow() //TODO()
 
-    override fun modify(descriptor: VirtualDescriptor, data: String): Boolean {
-        TODO("Not yet implemented")
-    }
-
-    override fun delete(descriptor: VirtualDescriptor): Boolean {
-        TODO("Not yet implemented")
-    }
-
-    override fun load(filePath: String): Boolean {
+    fun load(filePath: String): Boolean {
         _folderTree.update { folderStructureTree.load(filePath) }
         if(folderStructureTree.root.virtualDescriptor.type != VirtualDescriptorFileType.Empty) {
             // this is a valid path
@@ -49,7 +36,7 @@ class IDELangFileManager: FileManager {
 
     private fun initializeProjectIfNotYet() {
         // create config folder
-        val configFolderPath = listOf(projectPath, projConfigFolderName).joinToString("/")
+        val configFolderPath = listOf(projectPath, VfsManager.projConfigFolderName).joinToString("/")
         val configFolder = File(configFolderPath)
         try {
             configFolder.mkdir()
@@ -60,7 +47,7 @@ class IDELangFileManager: FileManager {
     }
 
     private fun initializeConfigFile(path: String) {
-        val configFile = File(listOf(path, projConfigFileName).joinToString("/"))
+        val configFile = File(listOf(path, VfsManager.projConfigFileName).joinToString("/"))
         configFile.createNewFile()
         updateFileAsConfig(configFile)
     }

@@ -1,4 +1,4 @@
-package backend.filesystem
+package backend.vfs
 
 interface VirtualFile {
     /*

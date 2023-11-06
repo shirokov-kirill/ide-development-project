@@ -1,6 +1,6 @@
-package backend.filesystem.descriptors
+package backend.vfs.descriptors
 
-import backend.filesystem.VirtualFile
+import backend.vfs.VirtualFile
 
 class FolderDescriptor(
     override var name: String,

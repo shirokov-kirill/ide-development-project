@@ -1,8 +1,9 @@
-package backend.filesystem
+package backend.vfs
 
-import backend.filesystem.descriptors.VirtualDescriptor
-import backend.filesystem.structure.FolderStructureNode
+import backend.vfs.descriptors.VirtualDescriptor
+import backend.vfs.structure.FolderStructureNode
 import kotlinx.coroutines.flow.StateFlow
+import java.lang.reflect.Modifier
 
 interface FileManager {
     val folderTree: StateFlow<FolderStructureNode>
@@ -15,4 +16,6 @@ interface FileManager {
     fun delete(descriptor: VirtualDescriptor): Boolean
 
     fun load(filePath: String): Boolean
+
+    fun create(filePath: String, modifier: Int): Boolean
 }

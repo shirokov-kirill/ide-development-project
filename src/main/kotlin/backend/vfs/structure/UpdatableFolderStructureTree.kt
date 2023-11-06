@@ -1,8 +1,8 @@
-package backend.filesystem.structure
+package backend.vfs.structure
 
-import backend.filesystem.descriptors.VirtualDescriptorFileType
-import backend.filesystem.descriptors.FolderDescriptor
-import backend.filesystem.descriptors.VirtualDescriptor
+import backend.vfs.descriptors.VirtualDescriptorFileType
+import backend.vfs.descriptors.FolderDescriptor
+import backend.vfs.descriptors.VirtualDescriptor
 import java.io.File
 
 class UpdatableFolderStructureTree : UpdatableFolderStructure {

@@ -1,6 +1,6 @@
-package backend.filesystem.structure
+package backend.vfs.structure
 
-import backend.filesystem.descriptors.VirtualDescriptor
+import backend.vfs.descriptors.VirtualDescriptor
 
 interface FolderStructureNode {
     val virtualDescriptor: VirtualDescriptor
