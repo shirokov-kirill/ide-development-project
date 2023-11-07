@@ -16,6 +16,9 @@ class UpdatableFolderStructureTree : UpdatableFolderStructure {
         TODO("Not yet implemented")
     }
 
+    /*
+     * filePath - path to the folder to load
+     */
     override fun load(filePath: String): FolderStructureNode {
         load(File(filePath), 0)?. let {
             root = it
@@ -67,8 +70,8 @@ class UpdatableFolderStructureTree : UpdatableFolderStructure {
             val node = UpdatableFolderStructureTreeNode(0, FolderDescriptor(file.name, VirtualDescriptorFileType.Folder), children)
             node.hash = node.hashCode()
             return node
-        } else if (file.exists() && file.isFile) {
-            // load file
+        } else if (file.exists() && file.isFile && depth != 0) {
+            // load file (not root)
             val node = UpdatableFolderStructureTreeNode(0, FolderDescriptor(file.name, VirtualDescriptorFileType.File), listOf())
             node.hash = node.hashCode()
             return node

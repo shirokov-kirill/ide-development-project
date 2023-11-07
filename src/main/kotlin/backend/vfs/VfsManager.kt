@@ -22,16 +22,19 @@ class VfsManager(private val filesystemEvents: ReceiveChannel<FilesystemChangeEv
     val virtualFolderTree: StateFlow<FolderStructureNode> = _folderTree.asStateFlow() //TODO()
 
     fun load(filePath: String): Boolean {
-        _folderTree.update { folderStructureTree.load(filePath) }
-        if(folderStructureTree.root.virtualDescriptor.type != VirtualDescriptorFileType.Empty) {
-            // this is a valid path
-            projectPath = filePath
-        }
-        if(folderStructureTree.root.virtualDescriptor.type == VirtualDescriptorFileType.RootFolder) {
+        return if (File(filePath).exists() && File(filePath).isDirectory) {
+            // path of existing folder
+            _folderTree.update { folderStructureTree.load(filePath) }
+            if(folderStructureTree.root.virtualDescriptor.type != VirtualDescriptorFileType.Empty) {
+                // this is a valid path
+                projectPath = filePath
+            }
             initializeProjectIfNotYet()
-        }
 
-        return true
+            true
+        } else {
+            false
+        }
     }
 
     private fun initializeProjectIfNotYet() {
