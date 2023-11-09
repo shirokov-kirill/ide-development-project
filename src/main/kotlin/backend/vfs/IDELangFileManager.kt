@@ -1,31 +1,19 @@
 package backend.vfs
 
-import backend.filesystem.FileChangeType
-import backend.filesystem.FilesystemChangeEvent
 import backend.filesystem.FilesystemMonitor
+import backend.filesystem.events.*
 import backend.vfs.FileManager.Companion.CREATE_DIR
 import backend.vfs.FileManager.Companion.CREATE_FILE
-import backend.vfs.descriptors.VirtualDescriptor
-import backend.vfs.descriptors.VirtualDescriptorFileType
 import backend.vfs.structure.FolderStructureNode
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import java.io.File
+import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.io.path.Path
 
 class IDELangFileManager: FileManager {
-    private val fileSystemEventChannel = Channel<FilesystemChangeEvent>(Channel.UNLIMITED)
-    private val innerEventsChannel = Channel<FilesystemChangeEvent>(1000)
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val eventSenderScope = Dispatchers.IO.limitedParallelism(1)
+    private val fileSystemEventChannel = ConcurrentLinkedQueue<FilesystemChangeEvent>()
+    private val innerEventsQueue = ConcurrentLinkedQueue<FilesystemChangeEvent>()
 
-    private val filesystemMonitor = FilesystemMonitor(fileSystemEventChannel)
-    private val vfs = Vfs(fileSystemEventChannel, innerEventsChannel)
+    private val vfs = Vfs(FilesystemMonitor(fileSystemEventChannel), fileSystemEventChannel, innerEventsQueue)
 
     override val folderTree: StateFlow<FolderStructureNode> = vfs.folderTree
     override val virtualFolderTree: StateFlow<FolderStructureNode> = vfs.virtualFolderTree
@@ -33,52 +21,43 @@ class IDELangFileManager: FileManager {
     /*
      * Call on explicit Save action from user
      */
-    override fun save(filePath: String): Boolean {
+    override fun save(filePath: String) {
         TODO("Not yet implemented")
     }
 
-    override fun delete(filePath: String): Boolean {
-        TODO("Not yet implemented")
+    override fun delete(filePath: String) {
+        innerEventsQueue.add(RemoveEvent(filePath))
     }
 
     /*
      * Call on explicit Open Folder action from user
      */
-    override fun load(absoluteFolderPath: String): Boolean {
-        if(vfs.load(absoluteFolderPath)) {
-            filesystemMonitor.register(Path(absoluteFolderPath))
-            return true
-        }
-        return false
+    override fun load(absoluteFolderPath: String) {
+        innerEventsQueue.add(OpenProjectEvent(absoluteFolderPath))
     }
 
     /*
      * Call on explicit Create File/Folder action from user
      */
-    override fun create(filePath: String, modifier: Int): Boolean {
+    override fun create(filePath: String, name: String, modifier: Int) {
         when(modifier) {
             CREATE_FILE -> {
-                CoroutineScope(eventSenderScope). launch {
-                    innerEventsChannel.send(FilesystemChangeEvent(FileChangeType.LOCAL_CREATE_FILE, File(filePath).toPath()))
-                }
+                innerEventsQueue.add(CreateFileEvent(filePath, name))
             }
             CREATE_DIR -> {
-                CoroutineScope(eventSenderScope). launch {
-                    innerEventsChannel.send(FilesystemChangeEvent(FileChangeType.LOCAL_CREATE_FOLDER, File(filePath).toPath()))
-                }
+                innerEventsQueue.add(CreateFolderEvent(filePath, name))
             }
             else -> {
                 System.err.println("Non-supported modifier $modifier in IDELangFileManager.create method.")
             }
         }
-        return true
     }
 
     override fun rename(filePath: String, newName: String) {
-        TODO("Not yet implemented")
+        innerEventsQueue.add(RenameEvent(Path(filePath), newName))
     }
 
     override fun close() {
-        TODO("Not yet implemented")
+        innerEventsQueue.add(CloseProjectEvent())
     }
 }

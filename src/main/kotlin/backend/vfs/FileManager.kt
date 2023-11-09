@@ -9,13 +9,13 @@ interface FileManager {
     val folderTree: StateFlow<FolderStructureNode>
     val virtualFolderTree: StateFlow<FolderStructureNode>
 
-    fun save(filePath: String): Boolean
+    fun save(filePath: String)
 
-    fun delete(filePath: String): Boolean
+    fun delete(filePath: String)
 
-    fun load(absoluteFolderPath: String): Boolean
+    fun load(absoluteFolderPath: String)
 
-    fun create(filePath: String, modifier: Int): Boolean
+    fun create(filePath: String, name: String, modifier: Int)
 
     fun rename(filePath: String, newName: String)
 

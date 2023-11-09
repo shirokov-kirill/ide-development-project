@@ -9,8 +9,8 @@ interface FilesystemView {
 
     fun openFolder(absoluteFolderPath: String)
     fun closeProject()
-    fun createNewFile(relativePath: String)
-    fun createNewFolder(relativePath: String)
+    fun createNewFile(relativePath: String, name: String)
+    fun createNewFolder(relativePath: String, name: String)
     fun renameFile(relativePath: String, newName: String)
     fun deleteFile(relativePath: String)
 }

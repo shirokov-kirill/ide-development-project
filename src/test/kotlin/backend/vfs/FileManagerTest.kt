@@ -1,6 +1,7 @@
 package backend.vfs
 
 import backend.vfs.structure.UpdatableFolderStructureTreeNode
+import kotlinx.coroutines.delay
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -38,6 +39,7 @@ class FileManagerTest {
         val fileTree = fileManager.folderTree
         assert(fileTree.value == UpdatableFolderStructureTreeNode.Empty)
         fileManager.load("$localPath/testStructure")
+        Thread.sleep(1000)
         assert(fileTree.value != UpdatableFolderStructureTreeNode.Empty)
     }
 
@@ -46,6 +48,7 @@ class FileManagerTest {
         assert(!File("$localPath/testStructure/${configDir}").exists())
         assert(!File("$localPath/testStructure/${configDir}/${configFile}").exists())
         fileManager.load("$localPath/testStructure")
+        Thread.sleep(1000)
         assert(File("$localPath/testStructure/${configDir}").exists())
         assert(File("$localPath/testStructure/${configDir}/${configFile}").exists())
     }
@@ -57,6 +60,7 @@ class FileManagerTest {
         assert(File("$localPath/testStructure/${configDir}").exists())
         assert(File("$localPath/testStructure/${configDir}/${configFile}").exists())
         fileManager.load("$localPath/testStructure")
+        Thread.sleep(1000)
         assert(File("$localPath/testStructure/${configDir}").exists())
         assert(File("$localPath/testStructure/${configDir}/${configFile}").exists())
     }
@@ -72,10 +76,12 @@ class FileManagerTest {
         assert(configFile.readLines().contains("Hello world!"))
 
         fileManager.load("$localPath/testStructure")
+        Thread.sleep(1000)
 
         assert(File("$localPath/testStructure/${configDir}").exists())
         assert(configFile.exists())
-        assert(!configFile.readLines().contains("Hello world!"))
+        val lines = configFile.readLines()
+        assert(!lines.contains("Hello world!"))
         assert(configFile.readLines().contains("proj_dir: $localPath/testStructure"))
     }
 

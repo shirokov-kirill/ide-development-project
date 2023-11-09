@@ -1,27 +1,92 @@
 package backend.vfs
 
-import backend.filesystem.FilesystemChangeEvent
+import backend.filesystem.FilesystemMonitor
+import backend.filesystem.events.FileChangeType
+import backend.filesystem.events.FilesystemChangeEvent
+import backend.filesystem.events.OpenProjectEvent
 import backend.vfs.descriptors.VirtualDescriptorFileType
 import backend.vfs.structure.FolderStructureNode
 import backend.vfs.structure.UpdatableFolderStructureTree
 import backend.vfs.structure.UpdatableFolderStructureTreeNode
-import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.io.File
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.io.path.Path
 
-class Vfs(private val filesystemEvents: ReceiveChannel<FilesystemChangeEvent>, innerEventsChannel: ReceiveChannel<FilesystemChangeEvent>) {
+class Vfs(private val filesystemMonitor: FilesystemMonitor,
+          private val filesystemEvents: ConcurrentLinkedQueue<FilesystemChangeEvent>,
+          private val innerEventsQueue: ConcurrentLinkedQueue<FilesystemChangeEvent>) {
+    // other data
     private var projectPath: String = ""
     private var folderStructureTree = UpdatableFolderStructureTree()
+    // --API-related
     private val _folderTree = MutableStateFlow<FolderStructureNode>(UpdatableFolderStructureTreeNode.Empty)
     // private val _virtualFolderTree = MutableStateFlow<FolderStructureNode>(TODO()
 
+    // event handlers
+    private val innerChangesHandlingThread = Thread { innerChangesHandler() }
+    private val outerChangesHandlingThread = Thread { outerChangesHandler() }
+
+    // API elements
     val folderTree: StateFlow<FolderStructureNode> = _folderTree.asStateFlow()
     val virtualFolderTree: StateFlow<FolderStructureNode> = _folderTree.asStateFlow() //TODO()
 
-    fun load(filePath: String): Boolean {
+    init {
+        innerChangesHandlingThread.start()
+        outerChangesHandlingThread.start()
+    }
+
+    private fun innerChangesHandler() {
+        val writeLock = readWriteLock.writeLock()
+        while (true) {
+            writeLock.lock()
+            while (innerEventsQueue.peek() != null) {
+                val element = innerEventsQueue.poll()
+                when(element.eventType) {
+                    FileChangeType.OPEN_PROJECT -> loadHandler((element as OpenProjectEvent).absoluteProjectPath)
+                    FileChangeType.CREATE_FILE -> continue //TODO()
+                    FileChangeType.CREATE_FOLDER -> continue //TODO()
+                    FileChangeType.REMOVE -> continue //TODO()
+                    FileChangeType.RENAME -> continue //TODO()
+                    FileChangeType.EDIT -> continue //TODO()
+                    else -> continue // ignore all unrelated messages
+                }
+            }
+            writeLock.unlock()
+            Thread.sleep(500)
+        }
+    }
+
+    private fun outerChangesHandler() {
+        val writeLock = readWriteLock.writeLock()
+        while (true) {
+            writeLock.lock()
+            while (filesystemEvents.peek() != null) {
+                val element = filesystemEvents.poll()
+                when(element.eventType) {
+                    FileChangeType.CREATE -> loadHandler((element as OpenProjectEvent).absoluteProjectPath)
+                    FileChangeType.EDIT -> continue //TODO()
+                    FileChangeType.REMOVE -> continue //TODO()
+                    else -> continue // ignore all unrelated messages
+                }
+            }
+            writeLock.unlock()
+            Thread.sleep(500)
+        }
+    }
+
+    private fun loadHandler(filePath: String) {
+        filesystemMonitor.reset()
+        if(load(filePath)) {
+            filesystemMonitor.register(Path(filePath))
+        }
+    }
+
+    private fun load(filePath: String): Boolean {
         return if (File(filePath).exists() && File(filePath).isDirectory) {
             // path of existing folder
             _folderTree.update { folderStructureTree.load(filePath) }
@@ -39,7 +104,7 @@ class Vfs(private val filesystemEvents: ReceiveChannel<FilesystemChangeEvent>, i
 
     private fun initializeProjectIfNotYet() {
         // create config folder
-        val configFolderPath = listOf(projectPath, Vfs.projConfigFolderName).joinToString("/")
+        val configFolderPath = listOf(projectPath, projConfigFolderName).joinToString("/")
         val configFolder = File(configFolderPath)
         try {
             configFolder.mkdir()
@@ -49,8 +114,8 @@ class Vfs(private val filesystemEvents: ReceiveChannel<FilesystemChangeEvent>, i
         }
     }
 
-    private fun initializeConfigFile(path: String) {
-        val configFile = File(listOf(path, Vfs.projConfigFileName).joinToString("/"))
+    private fun initializeConfigFile(configFolderPath: String) {
+        val configFile = File(listOf(configFolderPath, projConfigFileName).joinToString("/"))
         configFile.createNewFile()
         updateFileAsConfig(configFile)
     }
@@ -62,5 +127,6 @@ class Vfs(private val filesystemEvents: ReceiveChannel<FilesystemChangeEvent>, i
     companion object {
         const val projConfigFolderName = ".idl"
         const val projConfigFileName = "config.txt"
+        private val readWriteLock = ReentrantReadWriteLock()
     }
 }

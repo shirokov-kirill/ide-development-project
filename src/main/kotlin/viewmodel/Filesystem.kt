@@ -16,12 +16,12 @@ class Filesystem(private val fileManager: FileManager): FilesystemView {
         fileManager.close()
     }
 
-    override fun createNewFile(relativePath: String) {
-        fileManager.create(relativePath, FileManager.CREATE_FILE)
+    override fun createNewFile(relativePath: String, name: String) {
+        fileManager.create(relativePath, name, FileManager.CREATE_FILE)
     }
 
-    override fun createNewFolder(relativePath: String) {
-        fileManager.create(relativePath, FileManager.CREATE_DIR)
+    override fun createNewFolder(relativePath: String, name: String) {
+        fileManager.create(relativePath, name, FileManager.CREATE_DIR)
     }
 
     override fun renameFile(relativePath: String, newName: String) {

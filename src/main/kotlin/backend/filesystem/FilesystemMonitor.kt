@@ -1,18 +1,20 @@
 package backend.filesystem
 
+import backend.filesystem.events.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.SendChannel
 import java.io.IOException
 import java.nio.file.*
 import java.nio.file.StandardWatchEventKinds.*
 import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 
 
-class FilesystemMonitor(private val changesQueue: SendChannel<FilesystemChangeEvent>) {
-    private var dir: Path? = null
-    private var watchService: WatchService? = null
-    private var watchKey: WatchKey? = null
-    private var updateJob: Job? = null
+class FilesystemMonitor(private val changesQueue: ConcurrentLinkedQueue<FilesystemChangeEvent>) {
+    @Volatile private var dir: Path? = null
+    @Volatile private var watchService: WatchService? = null
+    @Volatile private var watchKey: WatchKey? = null
+    @Volatile private var updateJob: Job? = null
 
     private suspend fun pathObserverWorkflow() {
         while (true) {
@@ -55,9 +57,9 @@ class FilesystemMonitor(private val changesQueue: SendChannel<FilesystemChangeEv
                     // are lost or discarded.
                     child?. let {
                         when(kind) {
-                            ENTRY_CREATE -> changesQueue.send(FilesystemChangeEvent(FileChangeType.SYSTEM_CREATE, it))
-                            ENTRY_DELETE -> changesQueue.send(FilesystemChangeEvent(FileChangeType.SYSTEM_REMOVE, it))
-                            ENTRY_MODIFY -> changesQueue.send(FilesystemChangeEvent(FileChangeType.SYSTEM_EDIT, it))
+                            ENTRY_CREATE -> changesQueue.add(CreateEvent(it.toString()))
+                            ENTRY_DELETE -> changesQueue.add(RemoveEvent(it.toString()))
+                            ENTRY_MODIFY -> changesQueue.add(EditEvent(it.toString()))
                             else -> {}
                         }
                     }
@@ -82,10 +84,7 @@ class FilesystemMonitor(private val changesQueue: SendChannel<FilesystemChangeEv
      */
     @OptIn(ExperimentalCoroutinesApi::class)
     fun register(path: Path) {
-        // cancel previous registration if exists
-        watchService?.close()
-        watchKey = null
-        watchService = FileSystems.getDefault().newWatchService()
+        reset()
 
         dir = path
         try {
@@ -109,5 +108,12 @@ class FilesystemMonitor(private val changesQueue: SendChannel<FilesystemChangeEv
             }
             updateJob?.cancel()
         }
+    }
+
+    fun reset() {
+        watchService?.close()
+        watchKey = null
+        watchService = FileSystems.getDefault().newWatchService()
+        dir = null
     }
 }
