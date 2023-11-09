@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.io.File
 
-class VfsManager(private val filesystemEvents: ReceiveChannel<FilesystemChangeEvent>) {
+class Vfs(private val filesystemEvents: ReceiveChannel<FilesystemChangeEvent>, innerEventsChannel: ReceiveChannel<FilesystemChangeEvent>) {
     private var projectPath: String = ""
     private var folderStructureTree = UpdatableFolderStructureTree()
     private val _folderTree = MutableStateFlow<FolderStructureNode>(UpdatableFolderStructureTreeNode.Empty)
@@ -39,7 +39,7 @@ class VfsManager(private val filesystemEvents: ReceiveChannel<FilesystemChangeEv
 
     private fun initializeProjectIfNotYet() {
         // create config folder
-        val configFolderPath = listOf(projectPath, VfsManager.projConfigFolderName).joinToString("/")
+        val configFolderPath = listOf(projectPath, Vfs.projConfigFolderName).joinToString("/")
         val configFolder = File(configFolderPath)
         try {
             configFolder.mkdir()
@@ -50,7 +50,7 @@ class VfsManager(private val filesystemEvents: ReceiveChannel<FilesystemChangeEv
     }
 
     private fun initializeConfigFile(path: String) {
-        val configFile = File(listOf(path, VfsManager.projConfigFileName).joinToString("/"))
+        val configFile = File(listOf(path, Vfs.projConfigFileName).joinToString("/"))
         configFile.createNewFile()
         updateFileAsConfig(configFile)
     }

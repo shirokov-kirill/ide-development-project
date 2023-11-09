@@ -23,8 +23,8 @@ class FileManagerTest {
             null
         }
     }
-    private val configDir = VfsManager.projConfigFolderName
-    private val configFile = VfsManager.projConfigFileName
+    private val configDir = Vfs.projConfigFolderName
+    private val configFile = Vfs.projConfigFileName
 
     private var fileManager: FileManager = IDELangFileManager()
 
