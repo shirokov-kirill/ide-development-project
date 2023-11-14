@@ -1,6 +1,8 @@
 package viewmodel
 
 import backend.vfs.FileManager
+import backend.vfs.descriptors.FolderDescriptor
+import backend.vfs.descriptors.VirtualDescriptor
 import backend.vfs.structure.FolderStructureNode
 import kotlinx.coroutines.flow.StateFlow
 
@@ -16,19 +18,19 @@ class Filesystem(private val fileManager: FileManager): FilesystemView {
         fileManager.close()
     }
 
-    override fun createNewFile(relativePath: String, name: String) {
-        fileManager.create(relativePath, name, FileManager.CREATE_FILE)
+    override fun createNewFile(parent: FolderDescriptor, name: String) {
+        fileManager.create(parent, name, FileManager.CREATE_FILE)
     }
 
-    override fun createNewFolder(relativePath: String, name: String) {
-        fileManager.create(relativePath, name, FileManager.CREATE_DIR)
+    override fun createNewFolder(parent: FolderDescriptor, name: String) {
+        fileManager.create(parent, name, FileManager.CREATE_DIR)
     }
 
-    override fun renameFile(relativePath: String, newName: String) {
-        fileManager.rename(relativePath, newName)
+    override fun renameFile(item: VirtualDescriptor, newName: String) {
+        fileManager.rename(item, newName)
     }
 
-    override fun deleteFile(relativePath: String) {
-        fileManager.delete(relativePath)
+    override fun deleteFile(item: VirtualDescriptor) {
+        fileManager.delete(item)
     }
 }

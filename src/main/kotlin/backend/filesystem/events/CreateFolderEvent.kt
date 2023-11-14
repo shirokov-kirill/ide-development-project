@@ -1,3 +1,5 @@
 package backend.filesystem.events
 
-class CreateFolderEvent(path: String, name: String): FilesystemChangeEvent(FileChangeType.CREATE_FOLDER)
+import backend.vfs.descriptors.VirtualDescriptor
+
+class CreateFolderEvent(val parent: VirtualDescriptor, val name: String): FilesystemChangeEvent(FileChangeType.CREATE_FOLDER)

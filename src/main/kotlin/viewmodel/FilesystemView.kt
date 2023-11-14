@@ -1,5 +1,7 @@
 package viewmodel
 
+import backend.vfs.descriptors.FolderDescriptor
+import backend.vfs.descriptors.VirtualDescriptor
 import backend.vfs.structure.FolderStructureNode
 import kotlinx.coroutines.flow.StateFlow
 
@@ -9,8 +11,8 @@ interface FilesystemView {
 
     fun openFolder(absoluteFolderPath: String)
     fun closeProject()
-    fun createNewFile(relativePath: String, name: String)
-    fun createNewFolder(relativePath: String, name: String)
-    fun renameFile(relativePath: String, newName: String)
-    fun deleteFile(relativePath: String)
+    fun createNewFile(parent: FolderDescriptor, name: String)
+    fun createNewFolder(parent: FolderDescriptor, name: String)
+    fun renameFile(item: VirtualDescriptor, newName: String)
+    fun deleteFile(item: VirtualDescriptor)
 }

@@ -1,10 +1,13 @@
 package backend.vfs
 
+import backend.filesystem.CacheManager
 import backend.filesystem.FilesystemMonitor
-import backend.filesystem.events.FileChangeType
-import backend.filesystem.events.FilesystemChangeEvent
-import backend.filesystem.events.OpenProjectEvent
+import backend.filesystem.events.*
+import backend.vfs.descriptors.FileDescriptor
+import backend.vfs.descriptors.FolderDescriptor
 import backend.vfs.descriptors.VirtualDescriptorFileType
+import backend.vfs.files.FileLike
+import backend.vfs.files.FolderLike
 import backend.vfs.structure.FolderStructureNode
 import backend.vfs.structure.UpdatableFolderStructureTree
 import backend.vfs.structure.UpdatableFolderStructureTreeNode
@@ -16,8 +19,10 @@ import java.io.File
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.io.path.Path
+import kotlin.io.path.name
 
 class Vfs(private val filesystemMonitor: FilesystemMonitor,
+          private val cacheManager: CacheManager?,
           private val filesystemEvents: ConcurrentLinkedQueue<FilesystemChangeEvent>,
           private val innerEventsQueue: ConcurrentLinkedQueue<FilesystemChangeEvent>) {
     // other data
@@ -40,6 +45,35 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
         outerChangesHandlingThread.start()
     }
 
+    private fun loadHandler(filePath: String) {
+        filesystemMonitor.reset()
+        if(load(filePath)) {
+            filesystemMonitor.register(Path(filePath))
+        }
+    }
+
+    private fun createFileHandler(event: CreateFileEvent) {
+        folderStructureTree.add(event.parent, FileDescriptor(event.fileName, FileLike(event.parent.getFile().path.resolve(event.fileName).toFile())))
+        _folderTree.update { folderStructureTree.root }
+    }
+
+    private fun createFolderHandler(event: CreateFolderEvent) {
+        folderStructureTree.add(event.parent, FolderDescriptor(event.name, FolderLike(event.parent.getFile().path.resolve(event.name).toFile()), VirtualDescriptorFileType.Folder))
+        _folderTree.update { folderStructureTree.root }
+    }
+
+    private fun removeFileHandler(event: RemoveEvent) {
+        TODO()
+    }
+
+    private fun renameFileHandler(event: RenameEvent) {
+        TODO()
+    }
+
+    private fun editFileHandler(event: EditEvent) {
+        TODO()
+    }
+
     private fun innerChangesHandler() {
         val writeLock = readWriteLock.writeLock()
         while (true) {
@@ -48,11 +82,11 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
                 val element = innerEventsQueue.poll()
                 when(element.eventType) {
                     FileChangeType.OPEN_PROJECT -> loadHandler((element as OpenProjectEvent).absoluteProjectPath)
-                    FileChangeType.CREATE_FILE -> continue //TODO()
-                    FileChangeType.CREATE_FOLDER -> continue //TODO()
-                    FileChangeType.REMOVE -> continue //TODO()
-                    FileChangeType.RENAME -> continue //TODO()
-                    FileChangeType.EDIT -> continue //TODO()
+                    FileChangeType.CREATE_FILE -> createFileHandler(element as CreateFileEvent)
+                    FileChangeType.CREATE_FOLDER -> createFolderHandler(element as CreateFolderEvent)
+                    FileChangeType.REMOVE -> removeFileHandler(element as RemoveEvent)
+                    FileChangeType.RENAME -> renameFileHandler(element as RenameEvent)
+                    FileChangeType.EDIT -> editFileHandler(element as EditEvent)
                     else -> continue // ignore all unrelated messages
                 }
             }
@@ -76,13 +110,6 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
             }
             writeLock.unlock()
             Thread.sleep(500)
-        }
-    }
-
-    private fun loadHandler(filePath: String) {
-        filesystemMonitor.reset()
-        if(load(filePath)) {
-            filesystemMonitor.register(Path(filePath))
         }
     }
 

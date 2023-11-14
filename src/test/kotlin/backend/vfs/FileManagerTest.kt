@@ -27,11 +27,11 @@ class FileManagerTest {
     private val configDir = Vfs.projConfigFolderName
     private val configFile = Vfs.projConfigFileName
 
-    private var fileManager: FileManager = IDELangFileManager()
+    private var fileManager: FileManager = IDELangFileManager(null)
 
     @BeforeEach
     fun beforeEach() {
-        fileManager = IDELangFileManager()
+        fileManager = IDELangFileManager(null)
     }
 
     @Test

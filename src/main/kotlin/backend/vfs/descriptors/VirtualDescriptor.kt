@@ -1,12 +1,12 @@
 package backend.vfs.descriptors
 
-import backend.vfs.VirtualFile
+import backend.vfs.files.VirtualFile
 
 interface VirtualDescriptor {
     var name: String
     val type: VirtualDescriptorFileType
 
-    fun getFile(): VirtualFile?
+    fun getFile(): VirtualFile
 
     companion object {
         val Empty = object : VirtualDescriptor {
@@ -14,8 +14,8 @@ interface VirtualDescriptor {
             override val type: VirtualDescriptorFileType
                 get() = VirtualDescriptorFileType.Empty
 
-            override fun getFile(): VirtualFile? {
-                return null
+            override fun getFile(): VirtualFile {
+                return VirtualFile.Empty
             }
 
         }

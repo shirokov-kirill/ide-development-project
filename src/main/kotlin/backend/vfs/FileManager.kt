@@ -1,5 +1,6 @@
 package backend.vfs
 
+import backend.vfs.descriptors.FileDescriptor
 import backend.vfs.descriptors.VirtualDescriptor
 import backend.vfs.structure.FolderStructureNode
 import kotlinx.coroutines.flow.StateFlow
@@ -8,16 +9,26 @@ import java.lang.reflect.Modifier
 interface FileManager {
     val folderTree: StateFlow<FolderStructureNode>
     val virtualFolderTree: StateFlow<FolderStructureNode>
+    val watches: StateFlow<List<FileDescriptor>>
 
+    /*
+     * Call on explicit Save action from user
+     */
     fun save(filePath: String)
 
-    fun delete(filePath: String)
+    fun delete(item: VirtualDescriptor)
 
+    /*
+     * Call on explicit Open Folder action from user
+     */
     fun load(absoluteFolderPath: String)
 
-    fun create(filePath: String, name: String, modifier: Int)
+    /*
+     * Call on explicit Create File/Folder action from user
+     */
+    fun create(parent: VirtualDescriptor, name: String, modifier: Int)
 
-    fun rename(filePath: String, newName: String)
+    fun rename(item: VirtualDescriptor, newName: String)
 
     fun close()
 

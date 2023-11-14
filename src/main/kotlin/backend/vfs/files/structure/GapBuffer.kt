@@ -2,7 +2,7 @@ package backend.vfs.files.structure
 
 import java.util.Arrays
 
-private class GapBuffer(initBuffer: CharArray, initGapStart: Int, initGapEnd: Int) {
+class GapBuffer(initBuffer: CharArray, initGapStart: Int = 0, initGapEnd: Int = 100) {
 
     private var capacity = initBuffer.size
 
@@ -45,7 +45,7 @@ private class GapBuffer(initBuffer: CharArray, initGapStart: Int, initGapEnd: In
         gapEnd = newEnd
     }
 
-    private fun delete(start: Int, end: Int) {
+    fun delete(start: Int, end: Int) {
         if (start < gapStart && end <= gapStart) {
             // remove in the beginning
             val copyLen = gapStart - end
@@ -67,21 +67,42 @@ private class GapBuffer(initBuffer: CharArray, initGapStart: Int, initGapEnd: In
         }
     }
 
-    fun replace(start: Int, end: Int, text: String) {
-        makeSureAvailableSpace(text.length - (end - start))
-
-        delete(start, end)
-
+    fun insert(text: String, start: Int = gapStart) {
+        makeSureAvailableSpace(text.length)
         text.toCharArray(buffer, gapStart)
         gapStart += text.length
     }
 
-    fun append(builder: StringBuilder) {
+    fun left() {
+        buffer[gapEnd - 1] = buffer[gapStart - 1]
+        gapEnd -= 1
+        gapStart -= 1
+    }
+
+    fun right() {
+        buffer[gapStart] = buffer[gapEnd]
+        gapEnd += 1
+        gapStart += 1
+    }
+
+    fun moveFor(number: Int) {
+        if(number < 0) {
+            repeat(number) {
+                left()
+            }
+        } else {
+            repeat(number) {
+                right()
+            }
+        }
+    }
+
+    private fun append(builder: StringBuilder) {
         builder.append(buffer, 0, gapStart)
         builder.append(buffer, gapEnd, capacity - gapEnd)
     }
 
     fun length() = capacity - gapLength()
 
-    override fun toString(): String = StringBuilder().apply { append(this) }.toString()
+    override fun toString(): String = append(StringBuilder()).toString()
 }

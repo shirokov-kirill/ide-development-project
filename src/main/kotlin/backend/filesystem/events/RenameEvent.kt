@@ -1,5 +1,5 @@
 package backend.filesystem.events
 
-import java.nio.file.Path
+import backend.vfs.descriptors.VirtualDescriptor
 
-data class RenameEvent(val path: Path, val newName: String): FilesystemChangeEvent(FileChangeType.RENAME)
+data class RenameEvent(val item: VirtualDescriptor, val newName: String): FilesystemChangeEvent(FileChangeType.RENAME)

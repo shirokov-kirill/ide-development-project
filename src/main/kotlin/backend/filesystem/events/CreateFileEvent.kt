@@ -1,3 +1,5 @@
 package backend.filesystem.events
 
-data class CreateFileEvent(val path: String, val fileName: String): FilesystemChangeEvent(FileChangeType.CREATE_FILE)
+import backend.vfs.descriptors.VirtualDescriptor
+
+data class CreateFileEvent(val parent: VirtualDescriptor, val fileName: String): FilesystemChangeEvent(FileChangeType.CREATE_FILE)
