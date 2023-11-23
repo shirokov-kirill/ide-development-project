@@ -1,5 +1,7 @@
 package backend.vfs
 
+import backend.cache.CacheWriter
+import backend.cache.Cacheable
 import backend.filesystem.CacheManager
 import backend.filesystem.FilesystemMonitor
 import backend.filesystem.events.*
@@ -24,7 +26,8 @@ import kotlin.io.path.name
 class Vfs(private val filesystemMonitor: FilesystemMonitor,
           private val cacheManager: CacheManager?,
           private val filesystemEvents: ConcurrentLinkedQueue<FilesystemChangeEvent>,
-          private val innerEventsQueue: ConcurrentLinkedQueue<FilesystemChangeEvent>) {
+          private val innerEventsQueue: ConcurrentLinkedQueue<FilesystemChangeEvent>,
+): Cacheable {
     // other data
     private var projectPath: String = ""
     private var folderStructureTree = UpdatableFolderStructureTree()
@@ -36,6 +39,9 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
     private val innerChangesHandlingThread = Thread { innerChangesHandler() }
     private val outerChangesHandlingThread = Thread { outerChangesHandler() }
 
+    override var cacheableData: Any = ""
+    override var cacheFile: File = File(projConfigFolderName + vfsConfigFileName)
+
     // API elements
     val folderTree: StateFlow<FolderStructureNode> = _folderTree.asStateFlow()
     val virtualFolderTree: StateFlow<FolderStructureNode> = _folderTree.asStateFlow() //TODO()
@@ -43,6 +49,9 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
     init {
         innerChangesHandlingThread.start()
         outerChangesHandlingThread.start()
+
+        // register to cache the data
+        CacheWriter.SimpleCacheWriter.register(this)
     }
 
     private fun loadHandler(filePath: String) {
@@ -55,11 +64,13 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
     private fun createFileHandler(event: CreateFileEvent) {
         folderStructureTree.add(event.parent, FileDescriptor(event.fileName, FileLike(event.parent.getFile().path.resolve(event.fileName).toFile())))
         _folderTree.update { folderStructureTree.root }
+        cacheableData = folderStructureTree.root
     }
 
     private fun createFolderHandler(event: CreateFolderEvent) {
         folderStructureTree.add(event.parent, FolderDescriptor(event.name, FolderLike(event.parent.getFile().path.resolve(event.name).toFile()), VirtualDescriptorFileType.Folder))
         _folderTree.update { folderStructureTree.root }
+        cacheableData = folderStructureTree.root
     }
 
     private fun removeFileHandler(event: RemoveEvent) {
@@ -117,6 +128,7 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
         return if (File(filePath).exists() && File(filePath).isDirectory) {
             // path of existing folder
             _folderTree.update { folderStructureTree.load(filePath) }
+            cacheableData = folderStructureTree.root
             if(folderStructureTree.root.virtualDescriptor.type != VirtualDescriptorFileType.Empty) {
                 // this is a valid path
                 projectPath = filePath
@@ -154,6 +166,7 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
     companion object {
         const val projConfigFolderName = ".idl"
         const val projConfigFileName = "config.txt"
+        private const val vfsConfigFileName = "vfs.txt"
         private val readWriteLock = ReentrantReadWriteLock()
     }
 }
