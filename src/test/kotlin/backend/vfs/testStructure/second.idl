@@ -1,0 +1,26 @@
+var number = 42;
+var greeting = "Hello, IDELang!";
+var isTrue = true;
+var x = 5;
+var sum = x + 10;
+var fullName = "Hello " % "World!";
+var bothTrue = (x > 4) && (z == true);
+if (x > 10) { y = "Greater"; }
+if (z) { y = "True"; } else { y = "False"; }
+var i = 0;
+while (i < 5) {
+    i = i + 1;
+}
+
+func add(a: number, b: number)
+{
+	return a + b;  // Inferred return type: number
+}
+
+proc display(message: string) {
+    print(message)
+}
+
+print("Hello, World!");  // Displays: Hello, World!
+print(x);                // Displays the value of x
+print(y % " there!");    // Displays: hello there!
