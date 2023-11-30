@@ -1,12 +1,12 @@
-var number = 42;
+var a = 42;
 var greeting = "Hello, IDELang!";
 var isTrue = true;
 var x = 5;
 var sum = x + 10;
 var fullName = "Hello " % "World!";
-var bothTrue = (x > 4) && (z == true);
-if (x > 10) { y = "Greater"; }
-if (z) { y = "True"; } else { y = "False"; }
+var bothTrue = (x > 4) && (isTrue == true);
+if (x > 10) { greeting = "Greater"; }
+if (isTrue) { greeting = "True"; } else { isTrue = "False"; }
 var i = 0;
 while (i < 5) {
     i = i + 1;

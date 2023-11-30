@@ -19,4 +19,8 @@ abstract class AbstractLexerTokenFactory: LexerTokenFactory {
 
         return input
     }
+
+    override fun matchOneSecondary(position: Int): Int {
+        return position
+    }
 }
