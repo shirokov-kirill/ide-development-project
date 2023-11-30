@@ -9,7 +9,6 @@ import java.lang.reflect.Modifier
 interface FileManager {
     val folderTree: StateFlow<FolderStructureNode>
     val virtualFolderTree: StateFlow<FolderStructureNode>
-    val watches: StateFlow<List<FileDescriptor>>
 
     /*
      * Call on explicit Save action from user

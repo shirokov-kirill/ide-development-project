@@ -3,6 +3,8 @@ package backend.vfs
 import backend.filesystem.CacheManager
 import backend.filesystem.FilesystemMonitor
 import backend.filesystem.events.*
+import backend.psi.PsiManager
+import backend.psi.lexer.idelang.IDELangLexer
 import backend.vfs.FileManager.Companion.CREATE_DIR
 import backend.vfs.FileManager.Companion.CREATE_FILE
 import backend.vfs.descriptors.FileDescriptor
@@ -20,11 +22,10 @@ class IDELangFileManager(private val cacheManager: CacheManager?): FileManager {
     private val innerEventsQueue = ConcurrentLinkedQueue<FilesystemChangeEvent>()
 
     private val vfs = Vfs(FilesystemMonitor(fileSystemEventChannel), cacheManager, fileSystemEventChannel, innerEventsQueue)
-    private val _watches = MutableStateFlow<List<FileDescriptor>>(emptyList())
+    private val psiComponent = PsiManager(vfs)
 
     override val folderTree: StateFlow<FolderStructureNode> = vfs.folderTree
     override val virtualFolderTree: StateFlow<FolderStructureNode> = vfs.virtualFolderTree
-    override val watches: StateFlow<List<FileDescriptor>> = _watches.asStateFlow()
 
     override fun save(filePath: String) {
         TODO("Not yet implemented")

@@ -28,12 +28,15 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
           private val filesystemEvents: ConcurrentLinkedQueue<FilesystemChangeEvent>,
           private val innerEventsQueue: ConcurrentLinkedQueue<FilesystemChangeEvent>,
 ): Cacheable {
+    // lock
+    public val readWriteLock = ReentrantReadWriteLock()
     // other data
     private var projectPath: String = ""
     private var folderStructureTree = UpdatableFolderStructureTree()
     // --API-related
     private val _folderTree = MutableStateFlow<FolderStructureNode>(UpdatableFolderStructureTreeNode.Empty)
-    // private val _virtualFolderTree = MutableStateFlow<FolderStructureNode>(TODO()
+
+    public val watches: MutableList<FileDescriptor> = mutableListOf()
 
     // event handlers
     private val innerChangesHandlingThread = Thread { innerChangesHandler() }
@@ -62,8 +65,10 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
     }
 
     private fun createFileHandler(event: CreateFileEvent) {
-        folderStructureTree.add(event.parent, FileDescriptor(event.fileName, FileLike(event.parent.getFile().path.resolve(event.fileName).toFile())))
+        val descriptor = FileDescriptor(event.fileName, FileLike(event.parent.getFile().path.resolve(event.fileName).toFile()))
+        folderStructureTree.add(event.parent, descriptor)
         _folderTree.update { folderStructureTree.root }
+        watches.add(descriptor)
         cacheableData = folderStructureTree.root
     }
 
@@ -167,6 +172,5 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
         const val projConfigFolderName = ".idl"
         const val projConfigFileName = "config.txt"
         private const val vfsConfigFileName = "vfs.txt"
-        private val readWriteLock = ReentrantReadWriteLock()
     }
 }
