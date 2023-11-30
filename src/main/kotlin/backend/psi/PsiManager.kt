@@ -16,9 +16,14 @@ class PsiManager(private val virtualFileSystem: Vfs) {
      */
     fun updateState(): Boolean {
         val readLock = virtualFileSystem.readWriteLock.readLock()
-        val changesExist = false
+        var changesExist = false
         readLock.lock()
         val descriptors = virtualFileSystem.watches
+        if(inputState.size < descriptors.size) {
+            changesExist = true
+        }
+
+        // TODO add changes in text
         for(descriptor in descriptors) {
             inputState[descriptor] = descriptor.getFile().getFileContent() ?: ""
         }
