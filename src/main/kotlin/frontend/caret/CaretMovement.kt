@@ -48,5 +48,3 @@ fun moveCaretDown(textBuffer: TextBuffer, caretPosition: MutableState<Int>, init
 
     caretPosition.value = min(nextLineStart + initialXPosition!!, nextLineEnd)
 }
-
-
