@@ -11,6 +11,7 @@ import frontend.caret.moveCaretDown
 import frontend.caret.moveCaretUp
 import frontend.processKeyEvent
 
+
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() = application {
     val textBuffer = TextBuffer()
