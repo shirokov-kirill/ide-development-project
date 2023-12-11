@@ -1,67 +1,47 @@
-@file:OptIn(ExperimentalTextApi::class, ExperimentalTextApi::class, ExperimentalTextApi::class,
-    ExperimentalTextApi::class, ExperimentalTextApi::class, ExperimentalTextApi::class, ExperimentalTextApi::class
-)
-
-import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.type
-import androidx.compose.ui.input.key.utf16CodePoint
-import androidx.compose.ui.text.*
-import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.remember
+import androidx.compose.ui.input.key.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import frontend.App
+import frontend.TextBuffer
+import frontend.caret.getCaretXPosition
+import frontend.caret.moveCaretDown
+import frontend.caret.moveCaretUp
+import frontend.processKeyEvent
 
+@OptIn(ExperimentalComposeUiApi::class)
+fun main() = application {
+    val textBuffer = TextBuffer()
+    val caretPosition = remember { mutableStateOf(0) }
+    var initialXPosition: Int? = null
 
-val line = mutableStateOf("Hello")
-
-@OptIn(ExperimentalTextApi::class)
-@Composable
-@Preview
-fun App() {
-    val textMeasurer = rememberTextMeasurer()
-
-    MaterialTheme {
-        Box() {
-            Button(onClick = {
-                line.value = "Button pressed"
-            }) {
-                Text("Hello")
-            }
-
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                line.let {
-                    val measuredText = textMeasurer.measure(
-                        AnnotatedString(it.value),
-                        style = TextStyle(fontSize = 20.sp)
-                    )
-
-                    translate(100f, 100f) {
-                        drawText(measuredText)
+    Window(onCloseRequest = ::exitApplication, onKeyEvent = { keyEvent ->
+        if (keyEvent.type == KeyEventType.KeyDown) {
+            when (keyEvent.key) {
+                Key.DirectionUp -> {
+                    if (initialXPosition == null) {
+                        initialXPosition = getCaretXPosition(textBuffer.getText(), caretPosition.value)
                     }
+                    moveCaretUp(textBuffer, caretPosition, initialXPosition)
+                }
+
+                Key.DirectionDown -> {
+                    if (initialXPosition == null) {
+                        initialXPosition = getCaretXPosition(textBuffer.getText(), caretPosition.value)
+                    }
+                    moveCaretDown(textBuffer, caretPosition, initialXPosition)
+                }
+
+                else -> {
+                    initialXPosition = null
+                    processKeyEvent(keyEvent, caretPosition, textBuffer)
                 }
             }
         }
-    }
-}
-
-fun main() = application {
-    Window(onCloseRequest = ::exitApplication,
-        onKeyEvent = {
-            if (it.type == KeyEventType.KeyUp) {
-                line.value += it.utf16CodePoint.toChar()
-            }
-            true
-        }) {
-        App()
+        true
+    }) {
+        App(textBuffer = textBuffer.getText(), caretPosition = caretPosition.value)
     }
 }
