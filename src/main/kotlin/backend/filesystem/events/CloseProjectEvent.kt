@@ -1,0 +1,3 @@
+package backend.filesystem.events
+
+class CloseProjectEvent: FilesystemChangeEvent(FileChangeType.CLOSE_PROJECT)
