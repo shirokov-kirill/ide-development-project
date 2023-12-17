@@ -6,7 +6,7 @@ import java.nio.file.Path
 
 class FileLike(private val file: File): VirtualFile {
     override val path: Path = file.toPath()
-    private val structure: GapBuffer = GapBuffer(file.readText().toCharArray())
+    private val structure: GapBuffer = GapBuffer(CharArray(100){ ' ' } + file.readText().toCharArray(), 0, 100)
 
     override fun getFileContent(): String? {
         return structure.toString()

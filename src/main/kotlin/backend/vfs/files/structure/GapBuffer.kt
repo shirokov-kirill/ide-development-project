@@ -6,9 +6,7 @@ class GapBuffer(initBuffer: CharArray, initGapStart: Int = 0, initGapEnd: Int = 
 
     private var capacity = initBuffer.size
 
-    private var buffer = initBuffer.toString().substring(0, initGapStart).toCharArray() +
-            CharArray(initGapEnd - initGapStart) {' '} +
-            initBuffer.toString().substring(initGapEnd).toCharArray()
+    private var buffer = initBuffer
 
     private var gapStart = initGapStart
 
