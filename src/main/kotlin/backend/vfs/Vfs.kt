@@ -13,15 +13,20 @@ import backend.vfs.files.FolderLike
 import backend.vfs.structure.FolderStructureNode
 import backend.vfs.structure.UpdatableFolderStructureTree
 import backend.vfs.structure.UpdatableFolderStructureTreeNode
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.io.File
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.io.path.Path
 import kotlin.io.path.name
+import kotlin.math.truncate
 
 class Vfs(private val filesystemMonitor: FilesystemMonitor,
           private val cacheManager: CacheManager?,
@@ -36,11 +41,10 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
     // --API-related
     private val _folderTree = MutableStateFlow<FolderStructureNode>(UpdatableFolderStructureTreeNode.Empty)
 
-    public val watches: MutableList<FileDescriptor> = mutableListOf()
+    public val watches: MutableList<Pair<FileDescriptor, Boolean>> = mutableListOf()
 
     // event handlers
-    private val innerChangesHandlingThread = Thread { innerChangesHandler() }
-    private val outerChangesHandlingThread = Thread { outerChangesHandler() }
+    private val vfsScope = CoroutineScope(Dispatchers.IO + CoroutineName("Vfs"))
 
     override var cacheableData: Any = ""
     override var cacheFile: File = File(projConfigFolderName + vfsConfigFileName)
@@ -50,8 +54,13 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
     val virtualFolderTree: StateFlow<FolderStructureNode> = _folderTree.asStateFlow() //TODO()
 
     init {
-        innerChangesHandlingThread.start()
-        outerChangesHandlingThread.start()
+        vfsScope.launch {
+            innerChangesHandler()
+        }
+
+        vfsScope.launch {
+            outerChangesHandler()
+        }
 
         // register to cache the data
         CacheWriter.SimpleCacheWriter.register(this)
@@ -68,7 +77,7 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
         val descriptor = FileDescriptor(event.fileName, FileLike(event.parent.getFile().path.resolve(event.fileName).toFile()))
         folderStructureTree.add(event.parent, descriptor)
         _folderTree.update { folderStructureTree.root }
-        watches.add(descriptor)
+        watches.add(Pair(descriptor, true))
         cacheableData = folderStructureTree.root
     }
 
@@ -107,7 +116,7 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
                 }
             }
             writeLock.unlock()
-            Thread.sleep(500)
+            Thread.sleep(2000)
         }
     }
 
@@ -125,7 +134,7 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
                 }
             }
             writeLock.unlock()
-            Thread.sleep(500)
+            Thread.sleep(2000)
         }
     }
 

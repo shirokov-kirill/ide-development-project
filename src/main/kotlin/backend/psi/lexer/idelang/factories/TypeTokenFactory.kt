@@ -1,9 +1,6 @@
 package backend.psi.lexer.idelang.factories
 
-import backend.psi.lexer.idelang.tokens.BooleanToken
-import backend.psi.lexer.idelang.tokens.IdentifierToken
-import backend.psi.lexer.idelang.tokens.LexerToken
-import backend.psi.lexer.idelang.tokens.TypeToken
+import backend.psi.lexer.idelang.tokens.*
 
 class TypeTokenFactory(override val tokenCollection: MutableList<LexerToken>) : AbstractLexerTokenFactory() {
     override val regExpr: Regex = Regex("^(boolean|string|number)")
@@ -12,11 +9,11 @@ class TypeTokenFactory(override val tokenCollection: MutableList<LexerToken>) : 
 
     override fun matchOneSecondary(position: Int): Int {
         val token = tokenCollection[position]
-        if(token is IdentifierToken) {
+        if(token.type == TokenType.IDENTIFIER) {
             val hasMatch = regExpr.find(token.data, 0)
             hasMatch?. let {
                 if(it.range.last + 1 == token.data.length) {
-                    tokenCollection[position] = TypeToken(token.data)
+                    tokenCollection[position] = LexerToken(TokenType.TYPE, token.data)
                 }
                 return position + 1
             }

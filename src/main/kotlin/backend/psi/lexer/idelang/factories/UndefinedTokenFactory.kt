@@ -1,7 +1,7 @@
 package backend.psi.lexer.idelang.factories
 
 import backend.psi.lexer.idelang.tokens.LexerToken
-import backend.psi.lexer.idelang.tokens.UndefinedToken
+import backend.psi.lexer.idelang.tokens.TokenType
 
 class UndefinedTokenFactory(override val tokenCollection: MutableList<LexerToken>) : AbstractLexerTokenFactory() {
     override val regExpr: Regex = Regex("")
@@ -12,7 +12,7 @@ class UndefinedTokenFactory(override val tokenCollection: MutableList<LexerToken
     }
 
     override fun appendToken(text: String) {
-        tokenCollection.add(UndefinedToken(text))
+        tokenCollection.add(LexerToken(TokenType.UNDEFINED, text))
     }
 
 }

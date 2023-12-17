@@ -12,8 +12,12 @@ interface CacheWriter {
         val SimpleCacheWriter = object: CacheWriter {
             private val sources = mutableListOf<Cacheable>()
 
+            private val cacheScope = CoroutineScope(Dispatchers.IO + CoroutineName("Cache-writer"))
+
             init {
-                cacheWorkflow()
+                cacheScope.launch {
+                    cacheWorkflow()
+                }
             }
 
             private suspend fun writeFile(file: File, text: String) {
@@ -27,8 +31,8 @@ interface CacheWriter {
             }
 
             @OptIn(ExperimentalCoroutinesApi::class)
-            private fun cacheWorkflow() = runBlocking {
-                withContext(Dispatchers.IO.limitedParallelism(1)){
+            private suspend fun cacheWorkflow() {
+                withContext(Dispatchers.IO){
                     while (true) {
                         delay(10000)
                         for (source in sources){
@@ -36,7 +40,6 @@ interface CacheWriter {
                         }
                     }
                 }
-
             }
 
             override fun register(item: Cacheable) {

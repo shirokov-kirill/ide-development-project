@@ -39,7 +39,7 @@ class FileManagerTest {
         val fileTree = fileManager.folderTree
         assert(fileTree.value == UpdatableFolderStructureTreeNode.Empty)
         fileManager.load("$localPath/testStructure")
-        Thread.sleep(1000)
+        Thread.sleep(5000)
         assert(fileTree.value != UpdatableFolderStructureTreeNode.Empty)
     }
 
@@ -48,7 +48,7 @@ class FileManagerTest {
         assert(!File("$localPath/testStructure/${configDir}").exists())
         assert(!File("$localPath/testStructure/${configDir}/${configFile}").exists())
         fileManager.load("$localPath/testStructure")
-        Thread.sleep(1000)
+        Thread.sleep(3000)
         assert(File("$localPath/testStructure/${configDir}").exists())
         assert(File("$localPath/testStructure/${configDir}/${configFile}").exists())
     }

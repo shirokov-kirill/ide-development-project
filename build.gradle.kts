@@ -3,6 +3,7 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 plugins {
     kotlin("jvm")
     id("org.jetbrains.compose")
+    antlr
 }
 
 group = "com.ide-development"
@@ -21,6 +22,7 @@ dependencies {
     // With compose.desktop.common you will also lose @Preview functionality
     implementation(compose.desktop.currentOs)
     testImplementation(kotlin("test"))
+    antlr("org.antlr:antlr4:4.13.0") // use ANTLR version 4
 }
 
 tasks.test {

@@ -34,7 +34,7 @@ FUNC : 'func' ;
 RETURN : 'return' ;
 PROCEDURE : 'proc' ;
 
-PRINT: 'print' ;                                !!!
+PRINT: 'print' ;
 
 VAR : 'var' ;
 INT : [0-9]+ ;
