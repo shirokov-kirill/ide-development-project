@@ -1,16 +1,18 @@
 package backend.vfs
 
-import backend.psi.lexer.idelang.IDELangLexer
 import backend.psi.lexer.Lexer
+import backend.psi.lexer.idelang.IDELangLexer
 import backend.psi.lexer.idelang.tokens.TokenType
+import backend.psi.parser.idelang.IDELangParser
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.io.*
-import java.nio.charset.StandardCharsets
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.PrintStream
 import kotlin.test.assertNull
 
-class LexerTest {
+class ParserTest {
     private var baos = ByteArrayOutputStream()
     private val out = System.out
 
@@ -46,7 +48,9 @@ class LexerTest {
 
     @Test
     fun test01() {
-        val tokens = lexer.process(File(localPath + "/testStructure/second.idl").readText())
+        val tokens = lexer.process(File(localPath + "/testStructure/third.idl").readText())
+        val parser = IDELangParser(tokens)
+        val result = parser.parse()
         assertNull(tokens.firstOrNull { it.type == TokenType.UNDEFINED })
     }
 }

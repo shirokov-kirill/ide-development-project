@@ -1,81 +1,39 @@
 package backend.psi.lexer.idelang
 
-import androidx.compose.runtime.collectAsState
-import backend.psi.PsiManager
 import backend.psi.lexer.Lexer
 import backend.psi.lexer.idelang.factories.*
 import backend.psi.lexer.idelang.tokens.LexerToken
-import backend.psi.lexer.idelang.tokens.SpecialSToken
-import backend.psi.lexer.idelang.tokens.UndefinedToken
-import backend.vfs.FileManager
-import backend.vfs.Vfs
-import backend.vfs.descriptors.FileDescriptor
-import backend.vfs.descriptors.VirtualDescriptorFileType
-import backend.vfs.files.FileLike
 
-class IDELangLexer(psiManager: PsiManager): Lexer {
-
-    override val tokens: MutableMap<FileDescriptor, MutableList<LexerToken>> = mutableMapOf()
-
-    private fun primary(fd: FileDescriptor): List<LexerTokenFactory> {
-        // Throws IllegalStateException
-        check(tokens.contains(fd))
-
-        val tokenList = tokens[fd]!!
+class IDELangLexer: Lexer {
+    private fun primary(tokens: MutableList<LexerToken>): List<LexerTokenFactory> {
         return listOf(
-            IdentifierTokenFactory(tokenList),
-            SeparatorTokenFactory(tokenList),
-            OperatorTokenFactory(tokenList),
-            SpecialSTokenFactory(tokenList),
-            StringTokenFactory(tokenList),
-            NumberTokenFactory(tokenList)
+            IdentifierTokenFactory(tokens),
+            SeparatorTokenFactory(tokens),
+            OperatorTokenFactory(tokens),
+            SpecialSTokenFactory(tokens),
+            StringTokenFactory(tokens),
+            NumberTokenFactory(tokens)
         )
     }
 
-    private fun secondary(fd: FileDescriptor): List<LexerTokenFactory> {
-        // Throws IllegalStateException
-        check(tokens.contains(fd))
-
-        val tokenList = tokens[fd]!!
+    private fun secondary(tokens: MutableList<LexerToken>): List<LexerTokenFactory> {
         return listOf(
-            KeywordTokenFactory(tokenList),
-            BooleanTokenFactory(tokenList),
-            TypeTokenFactory(tokenList)
+            KeywordTokenFactory(tokens),
+            BooleanTokenFactory(tokens),
+            TypeTokenFactory(tokens)
         )
     }
 
-    private fun undefined(fd: FileDescriptor): UndefinedTokenFactory {
-        // Throws IllegalStateException
-        check(tokens.contains(fd))
+    private fun undefined(tokens: MutableList<LexerToken>): UndefinedTokenFactory = UndefinedTokenFactory(tokens)
 
-        return UndefinedTokenFactory(tokens[fd]!!)
-    }
-
-    private val lexerWorkflow = Thread {
-        while (true) {
-            if (psiManager.updateState()) {
-                for (data in psiManager.inputState){
-                    check(data.key.getFile() is FileLike)
-                    if(!tokens.contains(data.key)) {
-                        tokens[data.key] = mutableListOf()
-                    }
-                    process(data.value, data.key) }
-            }
-            Thread.sleep(600)
-        }
-    }
-
-    init {
-        lexerWorkflow.start()
-    }
-
-    override fun process(text: String, fd: FileDescriptor) {
+    override fun process(text: String): List<LexerToken> {
+        val tokens = mutableListOf<LexerToken>()
         var previousValue: CharSequence
         var currentValue: CharSequence = text
-        val undefinedFactory = undefined(fd)
+        val undefinedFactory = undefined(tokens)
         while (currentValue.isNotEmpty()){
             previousValue = currentValue
-            primary(fd).forEach {
+            primary(tokens).forEach {
                 currentValue = it.matchOne(currentValue)
             }
             if(currentValue == previousValue) {
@@ -85,11 +43,12 @@ class IDELangLexer(psiManager: PsiManager): Lexer {
         var index = 0
         val tokenCount = tokens.size
         while (index < tokenCount) {
-            for(factory in secondary(fd)){
+            for(factory in secondary(tokens)){
                 if(factory.matchOneSecondary(index) > index)
                     break
             }
             index++
         }
+        return tokens
     }
 }

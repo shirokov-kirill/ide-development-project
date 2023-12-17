@@ -22,7 +22,7 @@ class IDELangFileManager(private val cacheManager: CacheManager?): FileManager {
     private val innerEventsQueue = ConcurrentLinkedQueue<FilesystemChangeEvent>()
 
     private val vfs = Vfs(FilesystemMonitor(fileSystemEventChannel), cacheManager, fileSystemEventChannel, innerEventsQueue)
-    private val psiComponent = PsiManager(vfs)
+    private val psiComponent = PsiManager(vfs, cacheManager)
 
     override val folderTree: StateFlow<FolderStructureNode> = vfs.folderTree
     override val virtualFolderTree: StateFlow<FolderStructureNode> = vfs.virtualFolderTree

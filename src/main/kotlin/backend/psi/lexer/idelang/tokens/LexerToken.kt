@@ -1,6 +1,3 @@
 package backend.psi.lexer.idelang.tokens
 
-interface LexerToken {
-    val type: TokenType
-    val data: String
-}
+class LexerToken(val type: TokenType, val data: String)
