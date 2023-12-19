@@ -333,8 +333,8 @@ class IDELangParser(private val tokens: List<LexerToken>): Parser {
         val possibilities2 = listOf(
             ::parseProc,
             ::parseFunc,
-            ::parseWhile,
-            ::parseIf
+            //::parseWhile,
+            //::parseIf
         )
         val res = ParseResult()
         val results1 = parseOneOf(possibilities1)
@@ -349,7 +349,7 @@ class IDELangParser(private val tokens: List<LexerToken>): Parser {
             }
         }
 
-        val results2 = parseOneOf(possibilities1)
+        val results2 = parseOneOf(possibilities2)
         results2.forEach { pair ->
             pair.first.result?.let {
                 index = pair.second
