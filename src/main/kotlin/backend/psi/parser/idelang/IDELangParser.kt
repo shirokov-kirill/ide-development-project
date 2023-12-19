@@ -264,7 +264,37 @@ class IDELangParser(private val tokens: List<LexerToken>): Parser {
     }
 
     private fun parseWhile(): ParseResult {
-        TODO()
+        val res = ParseResult()
+        val children = mutableListOf<AstNode>()
+        if(currentToken.type == TokenType.WHILE) {
+            res.register(advance())
+            if(currentToken.type == TokenType.LBRACE) {
+                res.register(advance())
+                if(currentToken.type != TokenType.RBRACE) {
+                    val expr = res.register(parseBoolExpr())
+                    res.exception?.let { return res }
+                    children.add(expr as AstNode)
+                }
+                if(currentToken.type == TokenType.RBRACE) {
+                    res.register(advance())
+                    if(currentToken.type == TokenType.CURLY_LBRACE) {
+                        res.register(advance())
+                        val body = res.register(parseProcedureBody())
+                        res.exception?.let { return res }
+                        if(currentToken.type == TokenType.CURLY_RBRACE) {
+                            res.register(advance())
+                            children.add(body as AstNode)
+                            return res.success(WhileNode(children))
+                        }
+                        return res.failure(IllegalStateException("'}' expected after the loop body."))
+                    }
+                    return res.failure(IllegalStateException("Loop body expected."))
+                }
+                return res.failure(IllegalStateException("')' expected after the loop condition."))
+            }
+            return res.failure(IllegalStateException("Loop condition expected after 'while'."))
+        }
+        return res.failure(IllegalStateException("While loop should start with the 'while' keyword."))
     }
 
     private fun parseFunc(): ParseResult = parseCallable(TokenType.FUNC, ::parseFunctionBody)
@@ -290,7 +320,7 @@ class IDELangParser(private val tokens: List<LexerToken>): Parser {
         return resultList
     }
 
-    private fun parseReturnStatement(exprAllowed: Boolean): ParseResult {
+    private fun parseReturnStatement(): ParseResult {
         val possibilities = listOf(
             ::parseIntExpr,
             ::parseStringExpr,
@@ -300,20 +330,18 @@ class IDELangParser(private val tokens: List<LexerToken>): Parser {
         val token = currentToken
         if(token.type == TokenType.RETURN) {
             res.register(advance())
-            if(exprAllowed) {
-                val rememberIndex = index
-                val results = parseOneOf(possibilities)
-                results.forEach {
-                    index = it.second
-                    it.first.result?.let { it1 ->
-                        if(currentToken.type == TokenType.SEMICOLON) {
-                            res.register(advance())
-                            return res.success(ReturnNode(listOf(it1)))
-                        }
-                        return res.failure(IllegalStateException("Semicolon expected in the end of return statement."))
+            val rememberIndex = index
+            val results = parseOneOf(possibilities)
+            results.forEach {
+                index = it.second
+                it.first.result?.let { it1 ->
+                    if(currentToken.type == TokenType.SEMICOLON) {
+                        res.register(advance())
+                        return res.success(ReturnNode(listOf(it1)))
                     }
-                    index = rememberIndex
+                    return res.failure(IllegalStateException("Semicolon expected in the end of return statement."))
                 }
+                index = rememberIndex
             }
             if(currentToken.type == TokenType.SEMICOLON) {
                 res.register(advance())
@@ -333,7 +361,7 @@ class IDELangParser(private val tokens: List<LexerToken>): Parser {
         val possibilities2 = listOf(
             ::parseProc,
             ::parseFunc,
-            //::parseWhile,
+            ::parseWhile,
             //::parseIf
         )
         val res = ParseResult()
@@ -362,14 +390,22 @@ class IDELangParser(private val tokens: List<LexerToken>): Parser {
     private fun parseCallableBody(allowReturnExpr: Boolean): ParseResult {
         val res = ParseResult()
         val children = mutableListOf<AstNode>()
-        while (currentToken.type != TokenType.RETURN) {
+        val terminalToken = if(allowReturnExpr) {
+            TokenType.RETURN
+        } else {
+            TokenType.CURLY_RBRACE
+        }
+
+        while (currentToken.type != terminalToken) {
             val result = parseStatement()
             result.exception?.let { return res.failure(it) }
             result.result?.let { children.add(it) }
         }
-        val returnStatement = parseReturnStatement(allowReturnExpr)
-        returnStatement.exception?.let { res.failure(it) }
-        returnStatement.result?.let { children.add(it) }
+        if(allowReturnExpr) {
+            val returnStatement = parseReturnStatement()
+            returnStatement.exception?.let { res.failure(it) }
+            returnStatement.result?.let { children.add(it) }
+        }
         return res.success(ProgramNode(children))
     }
 

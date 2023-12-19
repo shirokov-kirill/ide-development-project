@@ -13,6 +13,8 @@ func add(a: number, b: number)
 }
 
 proc display(message: string) {
+    while((x > 10) && ("Hello" == "OOP")) {
+        print(x);
+    }
     print(message);
-    return;
 }
