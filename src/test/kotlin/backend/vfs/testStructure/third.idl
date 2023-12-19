@@ -1,1 +1,18 @@
 var a = 42;
+var greeting = "Hello, IDELang!";
+var isTrue = true;
+var x = 5;
+var sum = x + 10;
+var fullName = "Hello " % "World!";
+var bothTrue = (x > 4) && (isTrue == true);
+var i = 0;
+
+func add(a: number, b: number)
+{
+	return a + b;
+}
+
+proc display(message: string) {
+    print(message);
+    return;
+}

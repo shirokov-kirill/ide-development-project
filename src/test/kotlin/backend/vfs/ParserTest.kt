@@ -51,6 +51,6 @@ class ParserTest {
         val tokens = lexer.process(File(localPath + "/testStructure/third.idl").readText())
         val parser = IDELangParser(tokens)
         val result = parser.parse()
-        assertNull(tokens.firstOrNull { it.type == TokenType.UNDEFINED })
+        assertNull(result.exception)
     }
 }

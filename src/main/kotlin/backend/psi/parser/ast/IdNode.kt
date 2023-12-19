@@ -1,4 +1,4 @@
 package backend.psi.parser.ast
 
-class IdNode(name: String): LeafAstNode() {
+class IdNode(val name: String): LeafAstNode() {
 }
