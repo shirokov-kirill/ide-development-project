@@ -2,7 +2,6 @@ package backend.filesystem
 
 import backend.filesystem.events.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.SendChannel
 import java.io.IOException
 import java.nio.file.*
 import java.nio.file.StandardWatchEventKinds.*
@@ -10,7 +9,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
 
-class FilesystemMonitor(private val changesQueue: ConcurrentLinkedQueue<FilesystemChangeEvent>) {
+class FilesystemMonitor(private val changesQueue: ConcurrentLinkedQueue<ExternalChangeEvent>) {
     @Volatile private var dir: Path? = null
     @Volatile private var watchService: WatchService? = null
     @Volatile private var watchKey: WatchKey? = null
@@ -57,9 +56,9 @@ class FilesystemMonitor(private val changesQueue: ConcurrentLinkedQueue<Filesyst
                     // are lost or discarded.
                     child?. let {
                         when(kind) {
-                            ENTRY_CREATE -> changesQueue.add(CreateEvent(it.toString()))
-                            ENTRY_DELETE -> changesQueue.add(RemoveEvent(it.toString()))
-                            ENTRY_MODIFY -> changesQueue.add(EditEvent(it.toString()))
+                            ENTRY_CREATE -> changesQueue.add(CreateExtEvent(it.toString()))
+                            ENTRY_DELETE -> changesQueue.add(DeleteExtEvent(it.toString()))
+                            ENTRY_MODIFY -> changesQueue.add(ModifyExtEvent(it.toString()))
                             else -> {}
                         }
                     }

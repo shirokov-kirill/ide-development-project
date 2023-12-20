@@ -18,8 +18,8 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.io.path.Path
 
 class IDELangFileManager(private val cacheManager: CacheManager?): FileManager {
-    private val fileSystemEventChannel = ConcurrentLinkedQueue<FilesystemChangeEvent>()
-    private val innerEventsQueue = ConcurrentLinkedQueue<FilesystemChangeEvent>()
+    private val fileSystemEventChannel = ConcurrentLinkedQueue<ExternalChangeEvent>()
+    private val innerEventsQueue = ConcurrentLinkedQueue<InternalChangeEvent>()
 
     private val vfs = Vfs(FilesystemMonitor(fileSystemEventChannel), cacheManager, fileSystemEventChannel, innerEventsQueue)
     private val psiComponent = PsiManager(vfs, cacheManager)
