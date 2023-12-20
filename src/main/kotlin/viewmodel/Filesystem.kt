@@ -33,4 +33,8 @@ class Filesystem(private val fileManager: FileManager): FilesystemView {
     override fun deleteFile(item: VirtualDescriptor) {
         fileManager.delete(item)
     }
+
+    override fun saveFile(item: VirtualDescriptor) {
+        fileManager.save(item)
+    }
 }

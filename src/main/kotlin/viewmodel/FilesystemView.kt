@@ -15,4 +15,5 @@ interface FilesystemView {
     fun createNewFolder(parent: FolderDescriptor, name: String)
     fun renameFile(item: VirtualDescriptor, newName: String)
     fun deleteFile(item: VirtualDescriptor)
+    fun saveFile(item: VirtualDescriptor)
 }

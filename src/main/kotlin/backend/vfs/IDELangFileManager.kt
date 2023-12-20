@@ -27,8 +27,8 @@ class IDELangFileManager(private val cacheManager: CacheManager?): FileManager {
     override val folderTree: StateFlow<FolderStructureNode> = vfs.folderTree
     override val virtualFolderTree: StateFlow<FolderStructureNode> = vfs.virtualFolderTree
 
-    override fun save(filePath: String) {
-        TODO("Not yet implemented")
+    override fun save(item: VirtualDescriptor) {
+        innerEventsQueue.add(SaveFileEvent(item))
     }
 
     override fun delete(item: VirtualDescriptor) {
