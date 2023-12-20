@@ -15,5 +15,10 @@ class TextBuffer {
 
     fun getText(): List<Char> = text
 
+    fun setText(newText: List<Char>) {
+        text.clear()
+        text.addAll(newText)
+    }
+
     fun getSize(): Int = text.size
 }

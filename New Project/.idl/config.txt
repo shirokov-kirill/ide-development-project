@@ -1,0 +1,1 @@
+proj_dir: /Users/excuseem/IdeaProjects/ide-development-project/New Project

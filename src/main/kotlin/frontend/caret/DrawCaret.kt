@@ -19,7 +19,7 @@ fun DrawScope.drawCaret(textLines: List<String>, caretPosition: Int, textStyle: 
             val caretY = lineIndex * lineHeight
 
             drawLine(
-                color = Color.Black,
+                color = Color.White,
                 start = Offset(caretX, caretY),
                 end = Offset(caretX, caretY + lineHeight),
                 strokeWidth = 2f
