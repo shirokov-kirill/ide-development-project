@@ -73,15 +73,13 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
         event.parent.getFile().path.resolve(event.fileName).toFile().createNewFile()
     }
 
-    private fun createExtHandler(event: CreateExtEvent) {
-        val path = event.realPath
-        folderStructureTree.reloadSubtree(path)
+    private fun createFolderHandler(event: CreateFolderEvent) {
+        event.parent.getFile().path.resolve(event.name).toFile().mkdir()
     }
 
-    private fun createFolderHandler(event: CreateFolderEvent) {
-        folderStructureTree.add(event.parent, FolderDescriptor(event.name, FolderLike(event.parent.getFile().path.resolve(event.name).toFile()), VirtualDescriptorFileType.Folder))
-        _folderTree.update { folderStructureTree.root }
-        cacheableData = folderStructureTree.root
+    private fun createExtHandler(event: CreateExtEvent) {
+        val path = event.realPath.removePrefix(projectPath)
+        folderStructureTree.reloadSubtree(projectPath, path)
     }
 
     private suspend fun removeFileHandler(event: DeleteEvent) {
@@ -94,7 +92,7 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
 
     private suspend fun removeExtEvent(event: DeleteExtEvent) {
         try {
-            val virtualDescriptor = folderStructureTree.find(event.realPath).virtualDescriptor
+            val virtualDescriptor = folderStructureTree.find(event.realPath.removePrefix(projectPath)).virtualDescriptor
             folderStructureTree.remove(virtualDescriptor)
         } catch (e: IllegalArgumentException) {
             // we didn't have it already
@@ -161,16 +159,12 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
             while (filesystemEvents.peek() != null) {
                 val element = filesystemEvents.poll()
                 when(element.eventType) {
-                    FileChangeType.CREATE_EXT -> println(element.eventType)//createExtHandler(element as CreateExtEvent)
+                    FileChangeType.CREATE_EXT -> createExtHandler(element as CreateExtEvent)
                     FileChangeType.EDIT_EXT -> {
                         println(element.eventType)
                         println((element as ModifyExtEvent).realPath)
                     }//editFileExtHandler(element as ModifyExtEvent)
-                    FileChangeType.REMOVE_EXT -> {
-                        println(element.eventType)
-                        println((element as DeleteExtEvent).realPath)
-                        removeExtEvent(element as DeleteExtEvent)
-                    }
+                    FileChangeType.REMOVE_EXT -> removeExtEvent(element as DeleteExtEvent)
                     else -> continue // ignore all unrelated messages
                 }
             }

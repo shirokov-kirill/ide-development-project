@@ -144,6 +144,25 @@ class FileManagerTest {
         File("$localPath/testStructure/ToRemove3.idl").createNewFile()
     }
 
+    @Test
+    fun create01Test() {
+        fileManager.load("$localPath/testStructure")
+        Thread.sleep(1000)
+        fileManager.create(fileManager.folderTree.value.virtualDescriptor, "temporary1.txt", FileManager.CREATE_FILE)
+        Thread.sleep(3000)
+        assertTrue( fileManager.folderTree.value.children.count() == 7)
+        File("$localPath/testStructure/temporary1.txt").deleteRecursively()
+    }
+
+    @Test
+    fun create02Test() {
+        fileManager.load("$localPath/testStructure")
+        Thread.sleep(1000)
+        fileManager.create(fileManager.folderTree.value.virtualDescriptor, "temporary1.txt", FileManager.CREATE_DIR)
+        Thread.sleep(3000)
+        assertTrue( fileManager.folderTree.value.children.count() == 7)
+        File("$localPath/testStructure/temporary1.txt").deleteRecursively()
+    }
 
     @AfterEach
     fun afterEach() {

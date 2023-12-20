@@ -56,9 +56,9 @@ class FilesystemMonitor(private val changesQueue: ConcurrentLinkedQueue<External
                     // are lost or discarded.
                     child?. let {
                         when(kind) {
-                            ENTRY_CREATE -> changesQueue.add(CreateExtEvent(it.toString()))
-                            ENTRY_DELETE -> changesQueue.add(DeleteExtEvent(it.toString()))
-                            ENTRY_MODIFY -> changesQueue.add(ModifyExtEvent(it.toString()))
+                            ENTRY_CREATE -> changesQueue.add(CreateExtEvent(it.toString().replace("\\", "/")))
+                            ENTRY_DELETE -> changesQueue.add(DeleteExtEvent(it.toString().replace("\\", "/")))
+                            ENTRY_MODIFY -> changesQueue.add(ModifyExtEvent(it.toString().replace("\\", "/")))
                             else -> {}
                         }
                     }

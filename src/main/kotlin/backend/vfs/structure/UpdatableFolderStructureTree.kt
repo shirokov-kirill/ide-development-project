@@ -84,8 +84,8 @@ class UpdatableFolderStructureTree : UpdatableFolderStructure {
 
     override fun find(filePath: String): UpdatableFolderStructureTreeNode {
         val nearestParent = findNearest(filePath)
-        if(depth(nearestParent) == filePath.split("/").count() - 1){
-            nearestParent.children.firstOrNull { (it as UpdatableFolderStructureTreeNode).fileName == filePath.split("\\").last() }?.let {
+        if(depth(nearestParent) == filePath.split("/").lastIndex - 1) {
+            nearestParent.children.firstOrNull { (it as UpdatableFolderStructureTreeNode).fileName == filePath.split("/").last() }?.let {
                 return it as UpdatableFolderStructureTreeNode
             }
         }
@@ -93,7 +93,7 @@ class UpdatableFolderStructureTree : UpdatableFolderStructure {
     }
 
     private fun findNearest(path: String): UpdatableFolderStructureTreeNode {
-        val pathTokens = path.split("/").drop(1)
+        val pathTokens = path.split("/").filter { it.isNotEmpty() }.drop(1)
         var currentNode: UpdatableFolderStructureTreeNode? = root
         for(token in pathTokens) {
             currentNode = currentNode?.children?.firstOrNull { (it as UpdatableFolderStructureTreeNode).fileName == token } as UpdatableFolderStructureTreeNode?
@@ -101,15 +101,16 @@ class UpdatableFolderStructureTree : UpdatableFolderStructure {
         return currentNode ?: throw IllegalArgumentException("No virtual descriptor found")
     }
 
-    override fun reloadSubtree(path: String): Boolean {
+    override fun reloadSubtree(projectPath: String, path: String): Boolean {
         val parent = findNearest(path)
         val depth = depth(parent)
-        val file = File(path.split("/").take(depth + 1).joinToString("/"))
-        load(file, depth)?.let {
+        val file = File("$projectPath/${path.split("/").filter { it.isNotEmpty() }.take(depth + 1).joinToString("/")}")
+        load(file, depth + 1)?.let {
             parents[it] = parent
             parent.children.add(it)
+            return true
         }
-        return true
+        return false
     }
 
     private fun load(file: File, depth: Int): UpdatableFolderStructureTreeNode? {
