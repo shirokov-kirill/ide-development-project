@@ -97,9 +97,10 @@ class GapBuffer(initBuffer: CharArray, initGapStart: Int = 0, initGapEnd: Int = 
         }
     }
 
-    private fun append(builder: StringBuilder) {
+    private fun append(builder: StringBuilder): String {
         builder.append(buffer, 0, gapStart)
         builder.append(buffer, gapEnd, capacity - gapEnd)
+        return builder.toString()
     }
 
     fun length() = capacity - gapLength()
