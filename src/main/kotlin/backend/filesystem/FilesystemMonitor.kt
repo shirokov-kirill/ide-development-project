@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 class FilesystemMonitor(private val changesQueue: ConcurrentLinkedQueue<ExternalChangeEvent>) {
     @Volatile private var dir: Path? = null
-    @Volatile private var watchService: WatchService? = null
+    @Volatile private var watchService: WatchService = FileSystems.getDefault().newWatchService()
     @Volatile private var watchKey: WatchKey? = null
     @Volatile private var updateJob: Job? = null
 
@@ -21,7 +21,7 @@ class FilesystemMonitor(private val changesQueue: ConcurrentLinkedQueue<External
             // wait for key to be signaled
             val key = try {
                 withContext(Dispatchers.IO) {
-                    watchService?.take()
+                    watchService.take()
                 }
             } catch (x: InterruptedException) {
                 return
@@ -88,7 +88,7 @@ class FilesystemMonitor(private val changesQueue: ConcurrentLinkedQueue<External
         dir = path
         try {
             watchKey = path.register(
-                watchService!!,
+                watchService,
                 arrayOf(
                     ENTRY_CREATE,
                     ENTRY_DELETE,
@@ -105,12 +105,11 @@ class FilesystemMonitor(private val changesQueue: ConcurrentLinkedQueue<External
             updateJob = CoroutineScope(limitedIO). launch {
                 pathObserverWorkflow()
             }
-            updateJob?.cancel()
         }
     }
 
     fun reset() {
-        watchService?.close()
+        watchService.close()
         watchKey = null
         watchService = FileSystems.getDefault().newWatchService()
         dir = null

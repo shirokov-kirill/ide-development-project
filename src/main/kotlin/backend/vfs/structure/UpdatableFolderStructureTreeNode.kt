@@ -6,7 +6,10 @@ data class UpdatableFolderStructureTreeNode(
     var hash: Int,
     override val virtualDescriptor: VirtualDescriptor,
     override val children: MutableList<FolderStructureNode>): FolderStructureNode {
-        companion object {
-            val Empty = UpdatableFolderStructureTreeNode(0, VirtualDescriptor.Empty, mutableListOf())
-        }
+
+    val fileName: String
+        get() = virtualDescriptor.name
+    companion object {
+        val Empty = UpdatableFolderStructureTreeNode(0, VirtualDescriptor.Empty, mutableListOf())
     }
+}
