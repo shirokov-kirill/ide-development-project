@@ -7,4 +7,6 @@ interface FolderStructure {
     fun remove(item: VirtualDescriptor): Boolean
     fun load(filePath: String): FolderStructureNode
     fun isEmpty(): Boolean
+    fun find(filePath: String): FolderStructureNode
+    fun reloadSubtree(projectPath: String, path: String): Boolean
 }

@@ -19,7 +19,7 @@ class UpdatableFolderStructureTree : UpdatableFolderStructure {
         newNode.hash = newNode.hashCode()
 
         currentNode.children.add(newNode)
-        descriptors[item] = newNode;
+        descriptors[item] = newNode
         while (true) {
             currentNode.hash = currentNode.hashCode()
             currentNode = parents[currentNode] ?: return true
@@ -50,14 +50,14 @@ class UpdatableFolderStructureTree : UpdatableFolderStructure {
     /*
      * filePath - path to the folder to load
      */
-    override fun load(filePath: String): FolderStructureNode {
+    override fun load(filePath: String): UpdatableFolderStructureTreeNode {
         load(File(filePath), 0)?. let {
             root = it
         }
         return root
     }
 
-    override fun loadSecondaryAndUpdate(filePath: String): FolderStructureNode {
+    override fun loadSecondaryAndUpdate(filePath: String): UpdatableFolderStructureTreeNode {
         var node: UpdatableFolderStructureTreeNode = UpdatableFolderStructureTreeNode.Empty
         load(File(filePath), 0)?. let {
             node = it
@@ -70,6 +70,47 @@ class UpdatableFolderStructureTree : UpdatableFolderStructure {
 
     override fun isEmpty(): Boolean {
         return root.virtualDescriptor.type == VirtualDescriptorFileType.Empty
+    }
+
+    private fun depth(node: UpdatableFolderStructureTreeNode): Int {
+        var currentNode = node
+        var i = 0
+        while(parents[currentNode] != null) {
+            currentNode = parents[currentNode]!!
+            i++
+        }
+        return i
+    }
+
+    override fun find(filePath: String): UpdatableFolderStructureTreeNode {
+        val nearestParent = findNearest(filePath)
+        if(depth(nearestParent) == filePath.split("/").lastIndex - 1) {
+            nearestParent.children.firstOrNull { (it as UpdatableFolderStructureTreeNode).fileName == filePath.split("/").last() }?.let {
+                return it as UpdatableFolderStructureTreeNode
+            }
+        }
+        throw IllegalArgumentException("No virtual descriptor found")
+    }
+
+    private fun findNearest(path: String): UpdatableFolderStructureTreeNode {
+        val pathTokens = path.split("/").filter { it.isNotEmpty() }.drop(1)
+        var currentNode: UpdatableFolderStructureTreeNode? = root
+        for(token in pathTokens) {
+            currentNode = currentNode?.children?.firstOrNull { (it as UpdatableFolderStructureTreeNode).fileName == token } as UpdatableFolderStructureTreeNode?
+        }
+        return currentNode ?: throw IllegalArgumentException("No virtual descriptor found")
+    }
+
+    override fun reloadSubtree(projectPath: String, path: String): Boolean {
+        val parent = findNearest(path)
+        val depth = depth(parent)
+        val file = File("$projectPath/${path.split("/").filter { it.isNotEmpty() }.take(depth + 1).joinToString("/")}")
+        load(file, depth + 1)?.let {
+            parents[it] = parent
+            parent.children.add(it)
+            return true
+        }
+        return false
     }
 
     private fun load(file: File, depth: Int): UpdatableFolderStructureTreeNode? {

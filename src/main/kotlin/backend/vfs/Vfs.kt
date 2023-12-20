@@ -13,18 +13,16 @@ import backend.vfs.files.FolderLike
 import backend.vfs.structure.FolderStructureNode
 import backend.vfs.structure.UpdatableFolderStructureTree
 import backend.vfs.structure.UpdatableFolderStructureTreeNode
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import java.io.File
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.io.path.Path
+import kotlin.io.path.pathString
 
 class Vfs(private val filesystemMonitor: FilesystemMonitor,
           private val cacheManager: CacheManager?,
@@ -37,7 +35,7 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
     private var projectPath: String = ""
     private var folderStructureTree = UpdatableFolderStructureTree()
     // --API-related
-    private val _folderTree = MutableStateFlow<FolderStructureNode>(UpdatableFolderStructureTreeNode.Empty)
+    private val _folderTree = MutableStateFlow(UpdatableFolderStructureTreeNode.Empty)
 
     public val watches: MutableList<Pair<FileDescriptor, Boolean>> = mutableListOf()
 
@@ -64,7 +62,7 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
         CacheWriter.SimpleCacheWriter.register(this)
     }
 
-    private fun loadHandler(event: OpenProjectEvent) {
+    private suspend fun loadHandler(event: OpenProjectEvent) {
         filesystemMonitor.reset()
         if(load(event.absoluteProjectPath)) {
             filesystemMonitor.register(Path(event.absoluteProjectPath))
@@ -72,43 +70,67 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
     }
 
     private fun createFileHandler(event: CreateFileEvent) {
-        val descriptor = FileDescriptor(event.fileName, FileLike(event.parent.getFile().path.resolve(event.fileName).toFile()))
-        folderStructureTree.add(event.parent, descriptor)
-        _folderTree.update { folderStructureTree.root }
-        watches.add(Pair(descriptor, true))
-        cacheableData = folderStructureTree.root
+        event.parent.getFile().path.resolve(event.fileName).toFile().createNewFile()
     }
 
     private fun createFolderHandler(event: CreateFolderEvent) {
-        folderStructureTree.add(event.parent, FolderDescriptor(event.name, FolderLike(event.parent.getFile().path.resolve(event.name).toFile()), VirtualDescriptorFileType.Folder))
-        _folderTree.update { folderStructureTree.root }
-        cacheableData = folderStructureTree.root
+        event.parent.getFile().path.resolve(event.name).toFile().mkdir()
     }
 
-    private fun removeFileHandler(event: DeleteEvent) {
+    private fun createExtHandler(event: CreateExtEvent) {
+        val path = event.realPath.removePrefix(projectPath)
+        folderStructureTree.reloadSubtree(projectPath, path)
+    }
+
+    private suspend fun removeFileHandler(event: DeleteEvent) {
+        val file = event.virtualDescriptor
+            .getFile()
+            .path
+            .toFile()
+        file.deleteRecursively()
+    }
+
+    private suspend fun removeExtEvent(event: DeleteExtEvent) {
+        try {
+            val virtualDescriptor = folderStructureTree.find(event.realPath.removePrefix(projectPath)).virtualDescriptor
+            folderStructureTree.remove(virtualDescriptor)
+        } catch (e: IllegalArgumentException) {
+            // we didn't have it already
+            return
+        }
+    }
+
+    private suspend fun renameFileHandler(event: RenameEvent) {
+        val oldPath = event.item.getFile().path
+        val parentPath = event.item
+            .getFile().path
+            .pathString
+            .split("/")
+            .dropLast(1)
+            .joinToString("/")
+        println(oldPath)
+        val result = oldPath.toFile().renameTo(File(parentPath + "/${event.newName}"))
+        if(!result) {
+            println("Couldn't change the file name")
+        }
+    }
+
+    private suspend fun editFileHandler(event: EditEvent) {
         TODO()
     }
 
-    private fun removeExtEvent() {
-
-    }
-
-    private fun renameFileHandler(event: RenameEvent) {
+    private suspend fun editFileExtHandler(event: ModifyExtEvent) {
         TODO()
     }
 
-    private fun editFileHandler(event: EditEvent) {
-        TODO()
-    }
-
-    private fun saveEventHandler(event: SaveFileEvent) {
+    private suspend fun saveEventHandler(event: SaveFileEvent) {
         val descriptor = event.virtualDescriptor
         val filePath = descriptor.getFile().path
         val fileContent = descriptor.getFile().getFileContent() ?: return
         filePath.toFile().writeText(fileContent)
     }
 
-    private fun innerChangesHandler() {
+    private suspend fun innerChangesHandler() {
         val writeLock = readWriteLock.writeLock()
         while (true) {
             writeLock.lock()
@@ -126,29 +148,32 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
                 }
             }
             writeLock.unlock()
-            Thread.sleep(2000)
+            delay(500)
         }
     }
 
-    private fun outerChangesHandler() {
+    private suspend fun outerChangesHandler() {
         val writeLock = readWriteLock.writeLock()
         while (true) {
             writeLock.lock()
             while (filesystemEvents.peek() != null) {
                 val element = filesystemEvents.poll()
                 when(element.eventType) {
-                    FileChangeType.CREATE_EXT -> continue //TODO()
-                    FileChangeType.EDIT_EXT -> continue //TODO()
-                    FileChangeType.REMOVE_EXT -> continue //TODO()
+                    FileChangeType.CREATE_EXT -> createExtHandler(element as CreateExtEvent)
+                    FileChangeType.EDIT_EXT -> {
+                        println(element.eventType)
+                        println((element as ModifyExtEvent).realPath)
+                    }//editFileExtHandler(element as ModifyExtEvent)
+                    FileChangeType.REMOVE_EXT -> removeExtEvent(element as DeleteExtEvent)
                     else -> continue // ignore all unrelated messages
                 }
             }
             writeLock.unlock()
-            Thread.sleep(2000)
+            delay(500)
         }
     }
 
-    private fun load(filePath: String): Boolean {
+    private suspend fun load(filePath: String): Boolean {
         return if (File(filePath).exists() && File(filePath).isDirectory) {
             // path of existing folder
             _folderTree.update { folderStructureTree.load(filePath) }
