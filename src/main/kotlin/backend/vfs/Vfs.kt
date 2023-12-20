@@ -25,13 +25,11 @@ import java.io.File
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.io.path.Path
-import kotlin.io.path.name
-import kotlin.math.truncate
 
 class Vfs(private val filesystemMonitor: FilesystemMonitor,
           private val cacheManager: CacheManager?,
-          private val filesystemEvents: ConcurrentLinkedQueue<FilesystemChangeEvent>,
-          private val innerEventsQueue: ConcurrentLinkedQueue<FilesystemChangeEvent>,
+          private val filesystemEvents: ConcurrentLinkedQueue<ExternalChangeEvent>,
+          private val innerEventsQueue: ConcurrentLinkedQueue<InternalChangeEvent>,
 ): Cacheable {
     // lock
     public val readWriteLock = ReentrantReadWriteLock()
@@ -66,10 +64,10 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
         CacheWriter.SimpleCacheWriter.register(this)
     }
 
-    private fun loadHandler(filePath: String) {
+    private fun loadHandler(event: OpenProjectEvent) {
         filesystemMonitor.reset()
-        if(load(filePath)) {
-            filesystemMonitor.register(Path(filePath))
+        if(load(event.absoluteProjectPath)) {
+            filesystemMonitor.register(Path(event.absoluteProjectPath))
         }
     }
 
@@ -87,8 +85,12 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
         cacheableData = folderStructureTree.root
     }
 
-    private fun removeFileHandler(event: RemoveEvent) {
+    private fun removeFileHandler(event: DeleteEvent) {
         TODO()
+    }
+
+    private fun removeExtEvent() {
+
     }
 
     private fun renameFileHandler(event: RenameEvent) {
@@ -113,10 +115,10 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
             while (innerEventsQueue.peek() != null) {
                 val element = innerEventsQueue.poll()
                 when(element.eventType) {
-                    FileChangeType.OPEN_PROJECT -> loadHandler((element as OpenProjectEvent).absoluteProjectPath)
+                    FileChangeType.OPEN_PROJECT -> loadHandler(element as OpenProjectEvent)
                     FileChangeType.CREATE_FILE -> createFileHandler(element as CreateFileEvent)
                     FileChangeType.CREATE_FOLDER -> createFolderHandler(element as CreateFolderEvent)
-                    FileChangeType.REMOVE -> removeFileHandler(element as RemoveEvent)
+                    FileChangeType.REMOVE -> removeFileHandler(element as DeleteEvent)
                     FileChangeType.RENAME -> renameFileHandler(element as RenameEvent)
                     FileChangeType.EDIT -> editFileHandler(element as EditEvent)
                     FileChangeType.SAVE -> saveEventHandler(element as SaveFileEvent)
@@ -135,7 +137,7 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
             while (filesystemEvents.peek() != null) {
                 val element = filesystemEvents.poll()
                 when(element.eventType) {
-                    FileChangeType.CREATE_EXT -> loadHandler((element as OpenProjectEvent).absoluteProjectPath)
+                    FileChangeType.CREATE_EXT -> continue //TODO()
                     FileChangeType.EDIT_EXT -> continue //TODO()
                     FileChangeType.REMOVE_EXT -> continue //TODO()
                     else -> continue // ignore all unrelated messages
