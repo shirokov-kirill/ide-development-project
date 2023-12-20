@@ -96,7 +96,7 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
     }
 
     private fun editFileHandler(event: EditEvent) {
-        event.
+        TODO()
     }
 
     private fun saveEventHandler(event: SaveFileEvent) {
