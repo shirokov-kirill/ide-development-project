@@ -96,7 +96,14 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
     }
 
     private fun editFileHandler(event: EditEvent) {
-        TODO()
+        event.
+    }
+
+    private fun saveEventHandler(event: SaveFileEvent) {
+        val descriptor = event.virtualDescriptor
+        val filePath = descriptor.getFile().path
+        val fileContent = descriptor.getFile().getFileContent() ?: return
+        filePath.toFile().writeText(fileContent)
     }
 
     private fun innerChangesHandler() {
@@ -112,6 +119,7 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
                     FileChangeType.REMOVE -> removeFileHandler(element as RemoveEvent)
                     FileChangeType.RENAME -> renameFileHandler(element as RenameEvent)
                     FileChangeType.EDIT -> editFileHandler(element as EditEvent)
+                    FileChangeType.SAVE -> saveEventHandler(element as SaveFileEvent)
                     else -> continue // ignore all unrelated messages
                 }
             }
@@ -127,9 +135,9 @@ class Vfs(private val filesystemMonitor: FilesystemMonitor,
             while (filesystemEvents.peek() != null) {
                 val element = filesystemEvents.poll()
                 when(element.eventType) {
-                    FileChangeType.CREATE -> loadHandler((element as OpenProjectEvent).absoluteProjectPath)
-                    FileChangeType.EDIT -> continue //TODO()
-                    FileChangeType.REMOVE -> continue //TODO()
+                    FileChangeType.CREATE_EXT -> loadHandler((element as OpenProjectEvent).absoluteProjectPath)
+                    FileChangeType.EDIT_EXT -> continue //TODO()
+                    FileChangeType.REMOVE_EXT -> continue //TODO()
                     else -> continue // ignore all unrelated messages
                 }
             }

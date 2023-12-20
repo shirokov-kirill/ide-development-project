@@ -13,7 +13,7 @@ interface FileManager {
     /*
      * Call on explicit Save action from user
      */
-    fun save(filePath: String)
+    fun save(item: VirtualDescriptor)
 
     fun delete(item: VirtualDescriptor)
 
