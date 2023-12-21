@@ -2,18 +2,19 @@ package frontend
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEvent
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.utf16CodePoint
+import androidx.compose.ui.input.key.*
 import frontend.caret.moveCaretLeft
 import frontend.caret.moveCaretRight
+
+@OptIn(ExperimentalComposeUiApi::class)
+val exclusions = setOf(Key.Backspace, Key.Delete, Key.Enter, Key.ShiftLeft, Key.ShiftRight, Key.CtrlLeft, Key.CtrlRight, Key.MetaLeft, Key.MetaRight, Key.CapsLock)
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun processKeyEvent(
     keyEvent: KeyEvent,
     caretPosition: MutableState<Int>,
     textBuffer: TextBuffer,
+    isMetaPressed: Boolean,
 ) {
     when {
         keyEvent.key == Key.Backspace && caretPosition.value > 0 -> {
@@ -26,11 +27,11 @@ fun processKeyEvent(
         }
 
         keyEvent.key == Key.DirectionLeft -> {
-            moveCaretLeft(caretPosition)
+            moveCaretLeft(textBuffer, caretPosition, isMetaPressed)
         }
 
         keyEvent.key == Key.DirectionRight -> {
-            moveCaretRight(textBuffer, caretPosition)
+            moveCaretRight(textBuffer, caretPosition, isMetaPressed)
         }
 
         keyEvent.key == Key.Enter -> {
@@ -38,7 +39,7 @@ fun processKeyEvent(
             caretPosition.value++
         }
 
-        keyEvent.utf16CodePoint != 0 && keyEvent.key != Key.Backspace && keyEvent.key != Key.Delete && keyEvent.key != Key.Enter -> {
+        keyEvent.utf16CodePoint != 0 && keyEvent.key !in exclusions -> {
             textBuffer.insert(caretPosition.value, keyEvent.utf16CodePoint.toChar())
             caretPosition.value++
         }

@@ -4,12 +4,24 @@ import androidx.compose.runtime.MutableState
 import frontend.TextBuffer
 import java.lang.Integer.min
 
-fun moveCaretLeft(caretPosition: MutableState<Int>) {
-    caretPosition.value = (caretPosition.value - 1).coerceAtLeast(0)
+fun moveCaretLeft(textBuffer: TextBuffer, caretPosition: MutableState<Int>, isMetaPressed: Boolean) {
+    if (!isMetaPressed) {
+        caretPosition.value = (caretPosition.value - 1).coerceAtLeast(0)
+    } else {
+        val text = textBuffer.getText()
+        caretPosition.value = text.take(caretPosition.value).joinToString("").lastIndexOf('\n') + 1
+    }
 }
 
-fun moveCaretRight(textBuffer: TextBuffer, caretPosition: MutableState<Int>) {
-    caretPosition.value = (caretPosition.value + 1).coerceAtMost(textBuffer.getSize())
+fun moveCaretRight(textBuffer: TextBuffer, caretPosition: MutableState<Int>, isMetaPressed: Boolean) {
+    if (!isMetaPressed) {
+        caretPosition.value = (caretPosition.value + 1).coerceAtMost(textBuffer.getSize())
+    } else {
+        val text = textBuffer.getText().joinToString("")
+        caretPosition.value = text.substring(caretPosition.value).indexOf('\n').let {
+            if (it == -1) text.length else it + caretPosition.value
+        }
+    }
 }
 
 fun moveCaretUp(textBuffer: TextBuffer, caretPosition: MutableState<Int>, initialXPosition: Int?) {

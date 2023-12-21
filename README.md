@@ -7,7 +7,7 @@ todo
 ### Parts description
 #### Backend (Kirill Shirokov)
 Implementation details:
-
+ 
 1. By now there are two main interfaces through which the frontend can interract with the backend. (`VirtualFile` and `FilesystemView`) These two interfaces do encapsulate two of responsibilities of the IDE. Those are *file editing* and *project management*. On *file editing* modification operations like `insert` or `delete`, the signal should go through the handlers in `Vfs` instead of current simple implementation.
 
 2. There are two types of signals in the system - internal and external. External signals are coming from a special `FilesystemMonitor` component, which looks for changes in the project folder in the filesystem. Internal signals are coming from the user and are processed one by one in a background thread of `Vfs`.
@@ -31,4 +31,23 @@ Further development:
 5. Scopes, variables and typecheckers implementation in `Psi`
 
 #### Frontend (Vlad Em)
-todo
+## Features
+
+- **Text Editing**: A simple text editor with support for basic navigation and editing, including arrow key movement, backspace, delete, and text insertion.
+- **File Saving**: Files after editing can be easily saved by pressing the button in the left bottom corner.
+- **Dark Mode**: A sleek dark theme to reduce eye strain and provide a modern aesthetic.
+- **File Browser**: Navigate your project's files and folders with an integrated file browser.
+- **Key Command Handling**: Special handling for key combinations like Cmd + arrow for a more native feel.
+- **Caret Movement**: Navigation between lines using arrows is implemented (all directions).
+- **Viewport and scrollbar**: Scrolling feature is constructed.
+
+## Structure
+
+- `Main.kt`: The entry point of the application. Sets up the window and handles key events.
+- `frontend/App.kt`: Contains the main editor UI, rendering text and handling user input.
+- `frontend/KeyEvents.kt`: Processes key inputs and translates them into actions like moving the caret or editing text.
+- `caret`: Handles the logic for moving the caret in the text editor and its drawing.
+- `files`: Implements the file browser functionality.
+
+## How to run:
+

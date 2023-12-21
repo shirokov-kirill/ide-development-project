@@ -19,19 +19,17 @@ import androidx.compose.ui.unit.dp
 import backend.vfs.IDELangFileManager
 import backend.vfs.descriptors.VirtualDescriptor
 import backend.vfs.files.VirtualFile
-import frontend.App
-import frontend.TextBuffer
 import frontend.caret.getCaretXPosition
 import frontend.caret.moveCaretDown
 import frontend.caret.moveCaretUp
 import frontend.files.fileBrowser
 import frontend.files.openFile
 import frontend.files.saveFile
-import frontend.processKeyEvent
 import viewmodel.Filesystem
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.MaterialTheme
+import frontend.*
 
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -47,6 +45,7 @@ fun main() = application {
     MaterialTheme {
         Window(onCloseRequest = ::exitApplication, onKeyEvent = { keyEvent ->
             if (keyEvent.type == KeyEventType.KeyDown) {
+                val isMetaPressed = keyEvent.isMetaPressed
                 when (keyEvent.key) {
                     Key.DirectionUp -> {
                         if (initialXPosition == null) {
@@ -64,17 +63,17 @@ fun main() = application {
 
                     else -> {
                         initialXPosition = null
-                        processKeyEvent(keyEvent, caretPosition, textBuffer)
+                        processKeyEvent(keyEvent, caretPosition, textBuffer, isMetaPressed)
                     }
                 }
             }
             true
         }) {
-            Box(Modifier.fillMaxSize().background(Color.Black)) {
+            Box(Modifier.fillMaxSize().background(darkGrey)) {
                 val focusManager = LocalFocusManager.current
                 var selectedFileContent by remember { mutableStateOf<String?>(null) }
 
-                Row(Modifier.align(Alignment.TopStart)) {
+                Row(Modifier.align(Alignment.TopStart).background(mediumGrey)) {
                     fileBrowser(filesystem) { virtualFile ->
                         currentVirtualDescriptor = virtualFile
                         currentFile = virtualFile.getFile()
@@ -84,7 +83,7 @@ fun main() = application {
                     }
 
                     Divider(
-                        color = Color.LightGray,
+                        color = mediumGrey,
                         modifier = Modifier
                             .fillMaxHeight()
                             .width(1.dp)
@@ -92,7 +91,7 @@ fun main() = application {
 
                     Spacer(Modifier.width(8.dp))
 
-                    Box(Modifier.background(Color.DarkGray)) {
+                    Box(Modifier.background(darkGrey)) {
                         App(
                             textBuffer = textBuffer.getText(),
                             caretPosition = caretPosition.value,
@@ -104,10 +103,10 @@ fun main() = application {
                     onClick = {
                         currentVirtualDescriptor?.let { saveFile(filesystem, it, textBuffer) }
                     },
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF03DAC5)),
+                    colors = ButtonDefaults.buttonColors(backgroundColor = accentColor),
                     modifier = Modifier.align(Alignment.BottomStart).padding(16.dp)
                 ) {
-                    Text("Save", fontFamily = FontFamily.SansSerif, fontSize = 16.sp)
+                    Text("Save", fontFamily = FontFamily.SansSerif, fontSize = 16.sp, color = Color.Black)
                 }
             }
         }

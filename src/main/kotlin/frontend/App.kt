@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -15,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import frontend.caret.drawCaret
 
@@ -23,7 +25,7 @@ fun App(textBuffer: List<Char>, caretPosition: Int) {
     val textStyle = TextStyle(color = Color.White, fontSize = 16.sp, fontFamily = FontFamily.Monospace)
 
     MaterialTheme {
-        Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+        Box(modifier = Modifier.fillMaxSize().background(darkGrey)) {
             val textLines = buildList {
                 val currentLine = StringBuilder()
                 textBuffer.forEach { char ->
@@ -47,7 +49,15 @@ fun App(textBuffer: List<Char>, caretPosition: Int) {
 
             VerticalScrollbar(
                 adapter = rememberScrollbarAdapter(scrollState),
-                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
+                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                style = ScrollbarStyle(
+                    thickness = 8.dp,
+                    hoverDurationMillis = 300,
+                    unhoverColor = mediumGrey,
+                    minimalHeight = 16.dp,
+                    shape = RoundedCornerShape(4.dp),
+                    hoverColor = lightGrey
+                ),
             )
 
             Canvas(modifier = Modifier.matchParentSize()) {
